@@ -3,28 +3,35 @@ local Maze = require('maze')
 local Stack = require('stack')
 
 function love.load()
-  local windowSize = {600, 600};
-  love.window.setMode(windowSize[1],windowSize[2])
-  maze = Maze:new(104,104)
-  width = windowSize[1] / maze.cols
-  height = windowSize[2] / maze.rows
-  recursiveBacktrack(maze, maze:getCell(1, 1));
+    -- local windowSize = {1920, 1080}
+    local windowSize = {800, 800}
+    love.window.setMode(windowSize[1], windowSize[2])
+    -- rows = 78
+    -- maze = Maze:new(rows, math.ceil(rows * 1.75))
+    maze = Maze:new(104, 104)
+    width = windowSize[1] / maze.cols
+    height = windowSize[2] / maze.rows
+    recursiveBacktrack(maze, maze:getCell(1, 1))
+    maze.grid[1][1].walls.top = false
+    maze.grid[maze.rows][maze.cols].walls.bottom = false
 end
 
 function recursiveBacktrack(maze, current, stack)
-  stack = stack or Stack:new(current)
-  current.visited = true;
-  if stack:length() == 0 then return end
-  local neighbors = maze:getNeighbors(current);
-  if #neighbors == 0 then
-    return recursiveBacktrack(maze, stack:pop(), stack);
-  end
-  local next = neighbors[math.random(1, #neighbors)]
-  stack:push(next)
-  maze:removeWall(current, next)
-  recursiveBacktrack(maze, next, stack)
+    stack = stack or Stack:new(current)
+    current.visited = true
+    if stack:length() == 0 then
+        return
+    end
+    local neighbors = maze:getNeighbors(current)
+    if #neighbors == 0 then
+        return recursiveBacktrack(maze, stack:pop(), stack)
+    end
+    local next = neighbors[math.random(1, #neighbors)]
+    stack:push(next)
+    maze:removeWall(current, next)
+    recursiveBacktrack(maze, next, stack)
 end
 
 function love.draw()
-  maze:draw(width, height)
+    maze:draw(width, height)
 end
