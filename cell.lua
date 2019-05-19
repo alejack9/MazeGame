@@ -4,8 +4,15 @@ Cell = {
     right = true,
     bottom = true,
     left = true
-  },
-  new = function(self, row, col, obj)
+  }
+}
+
+function Cell.tostring(self)
+      return self.row .. 'x' .. self.col
+end
+
+
+function Cell.new(self, row, col, obj)
     obj = obj or {}
     obj.row = row
     obj.col = col
@@ -18,15 +25,15 @@ Cell = {
     setmetatable(obj, self)
     self.__index = self
     return obj
-  end,
-  draw = function(self, width, height)
+end
+
+function Cell.draw(self, width, height)
     local x = (self.col - 1) * width
     local y = (self.row - 1) * height
     if self.walls.top then love.graphics.line(x, y, x + width, y) end
     if self.walls.right then love.graphics.line(x + width, y, x + width, y + height) end
     if self.walls.bottom then love.graphics.line(x, y + height, x + width, y + height) end
     if self.walls.left then love.graphics.line(x, y, x, y + height) end
-  end
-}
+end
 
 return Cell
