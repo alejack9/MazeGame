@@ -41,15 +41,17 @@ function Cell.draw(self, width, height)
       love.graphics.setColor(162 / 255, 162 / 255, 162 / 255, 100)
       love.graphics.rectangle("fill", x, y, width, height)
     end
-    if self.current then
-      love.graphics.setColor(48 / 255, 87 / 255, 0, 100)
-      love.graphics.rectangle("fill", x, y, width, height)
-    end
     if self.hasKey then
       local key = love.graphics.newImage('key.png')
       local quad = love.graphics.newQuad(0, 0, key:getWidth(), key:getHeight(), width,height)
+      love.graphics.setColor(0,1,1,100)
+      love.graphics.rectangle("fill",x,y,width,height)
       love.graphics.draw(key, quad, x, y)
-
+    end
+  
+    if self.current then
+      love.graphics.setColor(48 / 255, 87 / 255, 0, 100)
+      love.graphics.rectangle("fill", x, y, width, height)
     end
     love.graphics.setColor(1, 1, 1, 100)
     if self.walls.up then love.graphics.line(x, y, x + width, y) end
