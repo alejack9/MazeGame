@@ -1,3 +1,5 @@
+directions = require('directions')
+
 function solve (current, finish, maze)
   current.visited = true
   if current == finish then coroutine.yield(true, 0) end
@@ -29,18 +31,13 @@ end
 
 function getNeighbors(maze, cell)
   local toReturn = {}
-  local walls = maze:getCell(cell.row,cell.col).walls
-  if maze:isValid(cell.row + 1, cell.col) and not maze:getCell(cell.row + 1,cell.col).visited and not walls.bottom then
-    table.insert(toReturn, maze:getCell(cell.row + 1,cell.col))
-  end
-  if maze:isValid(cell.row - 1, cell.col) and not maze:getCell(cell.row - 1, cell.col).visited and not walls.top then
-    table.insert(toReturn, maze:getCell(cell.row - 1, cell.col))
-  end
-  if maze:isValid(cell.row, cell.col + 1) and not maze:getCell(cell.row, cell.col + 1).visited and not walls.right then
-    table.insert(toReturn, maze:getCell(cell.row, cell.col + 1))
-  end
-  if maze:isValid(cell.row, cell.col - 1) and not maze:getCell(cell.row, cell.col - 1).visited and not walls.left then
-    table.insert(toReturn, maze:getCell(cell.row, cell.col - 1))
+  for direction, step in pairs(directions) do
+    if maze:isValid(cell.row + step[1], cell.col + step[2]) then
+      local target = maze:getCell(cell.row + step[1], cell.col + step[2])
+      if not target.visited and not cell.walls[direction] then
+        table.insert(toReturn, target)
+      end
+    end
   end
   return toReturn  
 end

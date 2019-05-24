@@ -1,24 +1,9 @@
 local Cell = require('cell')
-
-table.filter = function(t, filterIter)
-  local out = {}
-
-  for k, v in pairs(t) do
-    if filterIter(v, k, t) then table.insert(out,v) end
-  end
-
-  return out
-end
-
-table.map = function(t, mapFun)
-  local out = {}
-  for k, v in pairs(t) do
-    table.insert(out, mapFun(v))
-  end
-end
+local directions = require('directions')
 
 Maze = {
   grid = {},
+  current = {}
 }
 
 function Maze.new(self, rows, cols, obj)
@@ -32,6 +17,8 @@ function Maze.new(self, rows, cols, obj)
         obj.grid[i][j] = Cell:new(i,j)
     end
   end
+  self.current = self.grid[1][1]
+  self.grid[1][1]:toogleCurrent()
   setmetatable(obj, self)
   self.__index = self
   return obj
@@ -43,17 +30,10 @@ end
 
 function Maze.getNeighbors(self, cell)
   toReturn = {}
-  if self:isValid(cell.row + 1, cell.col) and not self:getCell(cell.row + 1,cell.col).visited then
-    table.insert(toReturn, self:getCell(cell.row + 1,cell.col))
-  end
-  if self:isValid(cell.row - 1, cell.col) and not self:getCell(cell.row - 1, cell.col).visited then
-    table.insert(toReturn, self:getCell(cell.row - 1, cell.col))
-  end
-  if self:isValid(cell.row, cell.col + 1) and not self:getCell(cell.row, cell.col + 1).visited then
-    table.insert(toReturn, self:getCell(cell.row, cell.col + 1))
-  end
-  if self:isValid(cell.row, cell.col - 1) and not self:getCell(cell.row, cell.col - 1).visited then
-    table.insert(toReturn, self:getCell(cell.row, cell.col - 1))
+  for _, step in pairs(directions) do
+    if self:isValid(cell.row + step[1], cell.col + step[2]) and not self:getCell(cell.row + step[1],cell.col + step[2]).visited then
+      table.insert(toReturn, self:getCell(cell.row + step[1], cell.col + step[2]))
+    end
   end
   return toReturn
 end
@@ -69,11 +49,11 @@ function Maze.removeWall(self, cell1, cell2)
     end
   else
     if cell1.row - cell2.row == 1 then
-      cell1.walls.top = false
-      cell2.walls.bottom = false
+      cell1.walls.up = false
+      cell2.walls.down = false
     else
-      cell1.walls.bottom = false
-      cell2.walls.top = false
+      cell1.walls.down = false
+      cell2.walls.up = false
     end
   end
 end
@@ -90,5 +70,38 @@ function Maze.isValid(self, row, col)
   return row >= 1 and col >= 1 and row <= self.rows and col <= self.cols;
 end
 
+function Maze.pierce(self, percentage)
+  local walls = {"down", "up", "right", "left"}
+  for i=1, math.ceil(percentage * self.rows * self.cols) do
+      local row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
+      local wall = walls[math.random(1, 4)]
+      self:removeWall(self:getCell(row, col), self:getCell(row + directions[wall][1], col + directions[wall][2]))
+  end
+end
+
+function Maze.move(self, direction)
+  if self:isValid(self.current.row + directions[direction][1], self.current.col + directions[direction][2]) and not self.current.walls[direction] then
+    local next = self:getCell(self.current.row + directions[direction][1],self.current.col + directions[direction][2])
+    Cell.toogleCurrent(next)
+    Cell.toogleCurrent(self:getCell(self.current.row, self.current.col))
+    self.current = next
+  end
+end
+
+
+table.filter = function(t, filterIter)
+  local out = {}
+  for k, v in pairs(t) do
+    if filterIter(v, k, t) then table.insert(out,v) end
+  end
+  return out
+end
+
+table.map = function(t, mapFun)
+  local out = {}
+  for k, v in pairs(t) do
+    table.insert(out, mapFun(v))
+  end
+end
 
 return Maze

@@ -2,29 +2,32 @@ math.randomseed(os.time())
 local Maze = require('maze')
 solver = require('maze-solver')
 --local Stack = require('stack')
+
+--    FULLSCREEN=true
+--    WINDOW_WIDTH = 1920
+--    WINDOW_HEIGHT = 1080
+--    ROWS = 100
+--    COLS = math.ceil(ROWS * 1.75)
+
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 800
+ROWS = 50
+COLS = 50
+PIERCE_PERCENTAGE = 0.5
+maze = Maze:new(ROWS, COLS)
+
 function love.load(arg)
   if arg[#arg] == "-debug" then require("mobdebug").start() end
-  local WINDOW_WIDTH = 600
-  local WINDOW_HEIGHT = 600
-  local ROWS = 20
-  local COLS = 20
-  local PIERCE_PERCENTAGE = 0.1
---    local FULLSCREEN=true
---    local WINDOW_WIDTH = 1920
---    local WINDOW_HEIGHT = 1080
---    local ROWS = 100
---    local COLS = math.ceil(ROWS * 1.75)
-  
-    maze = Maze:new(ROWS, COLS)
+    --maze = Maze:new(ROWS, COLS)
     width = WINDOW_WIDTH / maze.cols
     height = WINDOW_HEIGHT / maze.rows
     
     recursiveBacktrack(maze, maze:getCell(1, 1))
     --recursiveBacktrackWithStack(maze, maze:getCell(1, 1))
-    maze.grid[1][1].walls.top = false
-    maze.grid[ROWS][COLS].walls.bottom = false
-    
-    maze:pierceMaze(PIERCE_PERCENTAGE)
+    maze.grid[1][1].walls.up = false
+    maze.grid[ROWS][COLS].walls.down = false
+    maze.grid[math.random(1,ROWS)][math.random(1,COLS)].hasKey = true
+    maze:pierce(PIERCE_PERCENTAGE)
 
     resolve = false
 
@@ -35,36 +38,22 @@ function love.load(arg)
     res = false
 end
 
-function Maze.pierceMaze(self, percentage)
-  for i=1, math.ceil(percentage * self.rows * self.cols) do
-      local row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
-      local walls = {"bottom", "top", "right", "left"}
-      local wall = walls[math.random(1, 4)]
-      local nextRow, nextCol = row,col
-      if wall == "bottom" then
-          nextRow = nextRow + 1
-      elseif wall == "top" then
-          nextRow = nextRow - 1
-      elseif wall == "left" then
-          nextCol = nextCol - 1
-      else
-          nextCol = nextCol + 1
-      end
-      self:removeWall(self:getCell(row, col), self:getCell(nextRow, nextCol))
-  end
-end
 
 function love.update(dt)
     love.timer.sleep(1/30 - dt)
 end
 
+events = {
+  ["return"] = function() resolve = not resolve end,
+  ["escape"] = function() love.event.push('quit') end,
+  __index = function(t, k)
+    return function() maze:move(k) end
+  end
+}
+setmetatable(events, events)
+
 function love.keypressed(k)
-    if k == "return" then
-        resolve = not resolve
-    end
-    if k == "escape" then
-        love.event.push('quit')
-    end
+  events[k]()
 end
 
 function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
