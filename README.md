@@ -1,5 +1,5 @@
 # MazeGame
 
 ## Todo List
-  - Extract functions from objects
-  - Use non-litteral backtracking
+  * Add Key
+  * Get the pierce algorithm better

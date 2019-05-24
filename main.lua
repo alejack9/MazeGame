@@ -2,7 +2,6 @@ math.randomseed(os.time())
 local Maze = require('maze')
 solver = require('maze-solver')
 --local Stack = require('stack')
-
 function love.load(arg)
   if arg[#arg] == "-debug" then require("mobdebug").start() end
   local WINDOW_WIDTH = 600
@@ -55,11 +54,6 @@ function Maze.pierceMaze(self, percentage)
   end
 end
 
-function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
-    love.window.setFullscreen(FULLSCREEN and true or false)
-    love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT)
-end
-
 function love.update(dt)
     love.timer.sleep(1/30 - dt)
 end
@@ -72,6 +66,12 @@ function love.keypressed(k)
         love.event.push('quit')
     end
 end
+
+function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
+    love.window.setFullscreen(FULLSCREEN and true or false)
+    love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT)
+end
+
 
 function love.draw()
     maze:draw(width, height)
