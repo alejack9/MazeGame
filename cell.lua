@@ -1,17 +1,22 @@
 Cell = {
   walls = {
-    top = true,
+    up = true,
     right = true,
-    bottom = true,
+    down = true,
     left = true
   },
-  visited = false
+  visited = false,
+  current = false,
+  hasKey = false
 }
 
 function Cell.tostring(self)
       return self.row .. 'x' .. self.col
 end
 
+function Cell.toogleCurrent(self)
+  self.current = not self.current
+end
 
 function Cell.new(self, row, col, obj)
     obj = obj or {}
@@ -19,9 +24,9 @@ function Cell.new(self, row, col, obj)
     obj.col = col
     obj.visited = self.visited
     obj.walls = {}
-    obj.walls.top = self.walls.top
+    obj.walls.up = self.walls.up
     obj.walls.right = self.walls.right
-    obj.walls.bottom = self.walls.bottom
+    obj.walls.down = self.walls.down
     obj.walls.left = self.walls.left
     setmetatable(obj, self)
     self.__index = self
@@ -29,14 +34,27 @@ function Cell.new(self, row, col, obj)
 end
 
 function Cell.draw(self, width, height)
+    -- 162 : 255 = x : 1 
     local x = (self.col - 1) * width
     local y = (self.row - 1) * height
-    love.graphics.setColor(15,0,10,1)
-    if self.visited then love.graphics.rectangle("fill", x,y,width,height) end
-    love.graphics.setColor(255,255,255,1)
-    if self.walls.top then love.graphics.line(x, y, x + width, y) end
+    if self.visited then
+      love.graphics.setColor(162 / 255, 162 / 255, 162 / 255, 100)
+      love.graphics.rectangle("fill", x, y, width, height)
+    end
+    if self.current then
+      love.graphics.setColor(48 / 255, 87 / 255, 0, 100)
+      love.graphics.rectangle("fill", x, y, width, height)
+    end
+    if self.hasKey then
+      local key = love.graphics.newImage('key.png')
+      local quad = love.graphics.newQuad(0, 0, key:getWidth(), key:getHeight(), width,height)
+      love.graphics.draw(key, quad, x, y)
+
+    end
+    love.graphics.setColor(1, 1, 1, 100)
+    if self.walls.up then love.graphics.line(x, y, x + width, y) end
     if self.walls.right then love.graphics.line(x + width, y, x + width, y + height) end
-    if self.walls.bottom then love.graphics.line(x, y + height, x + width, y + height) end
+    if self.walls.down then love.graphics.line(x, y + height, x + width, y + height) end
     if self.walls.left then love.graphics.line(x, y, x, y + height) end
 end
 
