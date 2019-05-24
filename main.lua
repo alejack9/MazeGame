@@ -3,24 +3,35 @@ local Maze = require('maze')
 solver = require('maze-solver')
 --local Stack = require('stack')
 
+function love.load(arg)
+  if arg[#arg] == "-debug" then require("mobdebug").start() end
+  
 --    FULLSCREEN=true
 --    WINDOW_WIDTH = 1920
 --    WINDOW_HEIGHT = 1080
 --    ROWS = 100
 --    COLS = math.ceil(ROWS * 1.75)
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 800
-ROWS = 50
-COLS = 50
-PIERCE_PERCENTAGE = 0.5
-maze = Maze:new(ROWS, COLS)
+    WINDOW_WIDTH = 800
+    WINDOW_HEIGHT = 800
+    ROWS = 10
+    COLS = 10
+    PIERCE_PERCENTAGE = 0.5
+    width = WINDOW_WIDTH / COLS
+    height = WINDOW_HEIGHT / ROWS
+    
+    start()
+    
+    drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, false)
+end
 
-function love.load(arg)
-  if arg[#arg] == "-debug" then require("mobdebug").start() end
-    --maze = Maze:new(ROWS, COLS)
-    width = WINDOW_WIDTH / maze.cols
-    height = WINDOW_HEIGHT / maze.rows
+
+function love.update(dt)
+    love.timer.sleep(1/30 - dt)
+end
+
+function start()
+    maze = Maze:new(ROWS, COLS)
     
     recursiveBacktrack(maze, maze:getCell(1, 1))
     --recursiveBacktrackWithStack(maze, maze:getCell(1, 1))
@@ -30,23 +41,20 @@ function love.load(arg)
     maze:pierce(PIERCE_PERCENTAGE)
 
     resolve = false
-
-    drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, false)
     for _, rrow in ipairs(maze.grid) do for _,cell in ipairs(rrow) do cell.visited = false end end
     c = coroutine.create(solver)
     coroutine.resume(c, maze:getCell(1,1), maze:getCell(ROWS,COLS), maze)
     res = false
-end
 
-
-function love.update(dt)
-    love.timer.sleep(1/30 - dt)
 end
 
 events = {
   ["return"] = function() resolve = not resolve end,
   ["escape"] = function() love.event.push('quit') end,
+  ["r"] = start,
   __index = function(t, k)
+    k = (k == 'a' and 'left' or (k == 'd' and 'right' or (k == 's' and 'down' or (k == 'w' and 'up' or k))))
+    if k ~= 'left' and k ~= 'right' and k ~= 'down' and k ~= 'up' then return function() end end
     return function() maze:move(k) end
   end
 }
