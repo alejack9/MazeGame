@@ -1,28 +1,29 @@
 math.randomseed(os.time())
 local Maze = require('maze')
 solver = require('maze-solver')
---local Stack = require('stack')
+local Stack = require('stack')
+local Node = require('node')
 
 function love.load(arg)
-  if arg[#arg] == "-debug" then require("mobdebug").start() end
-  
+  if arg[#arg] == "-debug" then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start() end
 --    FULLSCREEN=true
 --    WINDOW_WIDTH = 1920
 --    WINDOW_HEIGHT = 1080
 --    ROWS = 100
 --    COLS = math.ceil(ROWS * 1.75)
 
-    WINDOW_WIDTH = 800
+    MAZE_WIDTH = 800
+    INFO_WIDTH = 200
     WINDOW_HEIGHT = 800
     ROWS = 10
     COLS = 10
     PIERCE_PERCENTAGE = 0.5
-    width = WINDOW_WIDTH / COLS
+    width = MAZE_WIDTH / COLS
     height = WINDOW_HEIGHT / ROWS
     
     start()
     
-    drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, false)
+    drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, false)
 end
 
 
@@ -32,9 +33,18 @@ end
 
 function start()
     maze = Maze:new(ROWS, COLS)
+    graph = Node.new(maze:getCell(1,1))
     
+--    recursiveBacktrack(maze, maze:getCell(1, 1), nil, graph)
     recursiveBacktrack(maze, maze:getCell(1, 1))
     --recursiveBacktrackWithStack(maze, maze:getCell(1, 1))
+
+  
+--    maze:resetVisited()
+--    graph.cell.visited = true
+    graph:build(maze)
+    graph:print()
+      
     maze.grid[1][1].walls.up = false
     maze.grid[ROWS][COLS].walls.down = false
     maze.grid[math.random(1,ROWS)][math.random(1,COLS)].hasKey = true
@@ -45,23 +55,39 @@ function start()
     c = coroutine.create(solver)
     coroutine.resume(c, maze:getCell(1,1), maze:getCell(ROWS,COLS), maze)
     res = false
-
+    steps = 0
 end
 
-events = {
+prevs = Stack:new()
+
+keys = {
   ["return"] = function() resolve = not resolve end,
   ["escape"] = function() love.event.push('quit') end,
   ["r"] = start,
+  opposite = function(k)
+    if k == "left" then return "right" elseif k == "right" then return "left" elseif k == "up" then return "down" elseif k == "down" then return "up" end
+  end,
   __index = function(t, k)
     k = (k == 'a' and 'left' or (k == 'd' and 'right' or (k == 's' and 'down' or (k == 'w' and 'up' or k))))
     if k ~= 'left' and k ~= 'right' and k ~= 'down' and k ~= 'up' then return function() end end
-    return function() maze:move(k) end
+    return function()
+      if maze:move(k) then
+        if k == keys.opposite(prevs:top()) then
+          prevs:pop()
+          steps = steps - 1;
+        else
+          prevs:push(k)
+          steps = steps + 1
+          -- to continue
+        end
+      end
+    end
   end
 }
-setmetatable(events, events)
+setmetatable(keys, keys)
 
 function love.keypressed(k)
-  events[k]()
+  keys[k]()
 end
 
 function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
@@ -71,9 +97,16 @@ end
 
 
 function love.draw()
+    love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
     maze:draw(width, height)
     if resolve and not res then
         _,res = coroutine.resume(c)
+    end
+    if maze.current == maze:getCell(ROWS,COLS) and maze:getCell(ROWS,COLS).open then
+      love.graphics.setColor(10/255, 10/255, 10/255, 1)
+      love.graphics.rectangle("fill",0,0,MAZE_WIDTH,WINDOW_HEIGHT)
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.printf("YOU WIN!",0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
     end
 end
 
@@ -85,12 +118,14 @@ function recursiveBacktrack(maze, current, visited)
         return true
     end
     repeat
-      local neighbors = maze:getNeighbors(current)
+      local neighbors = maze:getNeighborsNotVisited(current)
       if #neighbors == 0 then
           return false
       end
       local next = neighbors[math.random(1, #neighbors)]
       maze:removeWall(current, next)
+--      Node.addChild(node,Node.new(next, 0))
+--    until recursiveBacktrack(maze, next, visited, node.children[#(node.children)])
     until recursiveBacktrack(maze, next, visited)
 end
 

@@ -18,8 +18,8 @@ function Cell.toogleCurrent(self)
   self.current = not self.current
 end
 
-function Cell.new(self, row, col, obj)
-    obj = obj or {}
+function Cell.new(self, row, col)
+    local obj = {}
     obj.row = row
     obj.col = col
     obj.visited = self.visited
@@ -34,7 +34,7 @@ function Cell.new(self, row, col, obj)
 end
 
 function Cell.draw(self, width, height)
-    -- 162 : 255 = x : 1 
+    -- RBG : 255 = LUA : 1 
     local x = (self.col - 1) * width
     local y = (self.row - 1) * height
     if self.visited then
@@ -44,14 +44,16 @@ function Cell.draw(self, width, height)
     if self.hasKey then
       local key = love.graphics.newImage('key.png')
       local quad = love.graphics.newQuad(0, 0, key:getWidth(), key:getHeight(), width,height)
-      love.graphics.setColor(0,1,1,100)
-      love.graphics.rectangle("fill",x,y,width,height)
+      --love.graphics.setColor(150/255,95/255,0,100)
+      love.graphics.setColor(1,223/255,0,100)
+      love.graphics.ellipse("fill",x+width/2,y+height/2,width/2,height/2)
+      love.graphics.setColor(1,1,1,100)
       love.graphics.draw(key, quad, x, y)
     end
   
     if self.current then
       love.graphics.setColor(48 / 255, 87 / 255, 0, 100)
-      love.graphics.rectangle("fill", x, y, width, height)
+      love.graphics.ellipse("fill",x+width/2,y+height/2,width/2,height/2)
     end
     love.graphics.setColor(1, 1, 1, 100)
     if self.walls.up then love.graphics.line(x, y, x + width, y) end

@@ -17,6 +17,7 @@ function Maze.new(self, rows, cols, obj)
         obj.grid[i][j] = Cell:new(i,j)
     end
   end
+  obj.grid[rows][cols].open = false
   self.current = self.grid[1][1]
   self.grid[1][1]:toogleCurrent()
   setmetatable(obj, self)
@@ -28,7 +29,7 @@ function Maze.getCell(self, row, col)
   return self.grid[row][col];
 end
 
-function Maze.getNeighbors(self, cell)
+function Maze.getNeighborsNotVisited(self, cell)
   toReturn = {}
   for _, step in pairs(directions) do
     if self:isValid(cell.row + step[1], cell.col + step[2]) and not self:getCell(cell.row + step[1],cell.col + step[2]).visited then
@@ -36,6 +37,27 @@ function Maze.getNeighbors(self, cell)
     end
   end
   return toReturn
+end
+
+function Maze.getNeighborsWithoutWalls(self, cell)
+  local toReturn = {}
+  for direction, step in pairs(directions) do
+    if self:isValid(cell.row + step[1], cell.col + step[2]) then
+      local target = self:getCell(cell.row + step[1], cell.col + step[2])
+      if not target.visited and not cell.walls[direction] then
+        table.insert(toReturn, target)
+      end
+    end
+  end
+  return toReturn  
+end
+
+function Maze.resetVisited(self)
+  for row = 1, self.rows do
+    for cell = 1, self.cols do
+      self.grid[row][cell].visited = false
+    end
+  end
 end
 
 function Maze.removeWall(self, cell1, cell2)
@@ -85,7 +107,10 @@ function Maze.move(self, direction)
     Cell.toogleCurrent(next)
     Cell.toogleCurrent(self:getCell(self.current.row, self.current.col))
     self.current = next
+    if next.hasKey then next.hasKey = false; self:getCell(self.rows, self.cols).open = true end
+    return true
   end
+  return false
 end
 
 

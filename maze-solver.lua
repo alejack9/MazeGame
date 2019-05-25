@@ -3,7 +3,7 @@ directions = require('directions')
 function solve (current, finish, maze)
   current.visited = true
   if current == finish then coroutine.yield(true, 0) end
-  local neighbors = getNeighbors(maze, current)
+  local neighbors = maze:getNeighborsWithoutWalls(current)
   if #neighbors == 0 then coroutine.yield(false, 0) end
   if #neighbors == 1 then 
       coroutine.yield( false, 1)
@@ -26,20 +26,6 @@ function solve (current, finish, maze)
       coroutine.yield( cres, #coroutines )
   end
   coroutine.yield( cres, 0)
-end
-
-
-function getNeighbors(maze, cell)
-  local toReturn = {}
-  for direction, step in pairs(directions) do
-    if maze:isValid(cell.row + step[1], cell.col + step[2]) then
-      local target = maze:getCell(cell.row + step[1], cell.col + step[2])
-      if not target.visited and not cell.walls[direction] then
-        table.insert(toReturn, target)
-      end
-    end
-  end
-  return toReturn  
 end
 
 return solve
