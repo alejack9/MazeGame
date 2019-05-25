@@ -2,7 +2,7 @@ math.randomseed(os.time())
 local Maze = require('maze')
 solver = require('maze-solver')
 local Stack = require('stack')
-local Node = require('node')
+Graph = require('graph')
 
 function love.load(arg)
   if arg[#arg] == "-debug" then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start() end
@@ -33,22 +33,16 @@ end
 
 function start()
     maze = Maze:new(ROWS, COLS)
-    graph = Node.new(maze:getCell(1,1))
     
---    recursiveBacktrack(maze, maze:getCell(1, 1), nil, graph)
     recursiveBacktrack(maze, maze:getCell(1, 1))
-    --recursiveBacktrackWithStack(maze, maze:getCell(1, 1))
 
-  
---    maze:resetVisited()
---    graph.cell.visited = true
-    graph:build(maze)
-    graph:print()
-      
     maze.grid[1][1].walls.up = false
     maze.grid[ROWS][COLS].walls.down = false
     maze.grid[math.random(1,ROWS)][math.random(1,COLS)].hasKey = true
     maze:pierce(PIERCE_PERCENTAGE)
+
+    graph = Graph:new()
+    graph:build(maze, maze:getCell(1, 1))
 
     resolve = false
     for _, rrow in ipairs(maze.grid) do for _,cell in ipairs(rrow) do cell.visited = false end end
@@ -97,7 +91,8 @@ end
 
 
 function love.draw()
-    love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+    --love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+    love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
     maze:draw(width, height)
     if resolve and not res then
         _,res = coroutine.resume(c)
