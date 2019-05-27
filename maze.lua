@@ -6,20 +6,26 @@ Maze = {
   current = {}
 }
 
-function Maze.new(self, rows, cols, obj)
-  obj = obj or {}
-  obj.rows = rows
-  obj.cols = cols
-  obj.grid = self.grid
-  for i = 1, rows do
+function Maze.new(self, _rows, _cols, startRow, startCol, lastRow, lastCol)
+  lastRow   , lastCol   = lastRow   or _rows  , lastCol   or _cols
+  startRow  , startCol  = startRow  or    1   , startCol  or    1
+  local obj = {
+    rows = _rows,
+    cols = _cols,
+    grid = {}
+  }
+  for i = 1, _rows do
     obj.grid[i] = {}
-    for j = 1, cols do
+    for j = 1, _cols do
         obj.grid[i][j] = Cell:new(i,j)
     end
   end
-  obj.grid[rows][cols].open = false
-  self.current = self.grid[1][1]
-  self.grid[1][1]:toogleCurrent()
+  obj.grid[lastRow][lastCol].open = false
+  obj.grid[lastRow][lastCol].isLast = true
+  obj.start = obj.grid[startRow][startCol]
+  obj.last = obj.grid[lastRow][lastCol]
+  obj.current = obj.grid[startRow][startCol]
+  obj.grid[startRow][startCol]:toogleCurrent()
   setmetatable(obj, self)
   self.__index = self
   return obj
@@ -75,6 +81,7 @@ function Maze.resetVisited(self)
 end
 
 function Maze.removeWall(self, cell1, cell2)
+  if not cell2 then print(cell1:tostring()) end
   if cell1.row - cell2.row == 0 then
     if cell1.col - cell2.col == 1 then
       cell1.walls.left = false
@@ -108,9 +115,12 @@ end
 
 function Maze.pierce(self, percentage)
   local walls = {"down", "up", "right", "left"}
-  for i=1, math.ceil(percentage * self.rows * self.cols) do
-      local row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
-      local wall = walls[math.random(1, 4)]
+  for i = 1, math.ceil(percentage * self.rows * self.cols) do
+    local row, col, wall
+    repeat
+      row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
+      wall = walls[math.random(1, 4)]
+    until not self:isValid(row, col) or self:isValid(row + directions[wall][1], col + directions[wall][2])
       self:removeWall(self:getCell(row, col), self:getCell(row + directions[wall][1], col + directions[wall][2]))
   end
 end
@@ -121,7 +131,7 @@ function Maze.move(self, direction)
     Cell.toogleCurrent(next)
     Cell.toogleCurrent(self:getCell(self.current.row, self.current.col))
     self.current = next
-    if next.hasKey then next.hasKey = false; self:getCell(self.rows, self.cols).open = true end
+    if next.hasKey then next.hasKey = false; self.last.open = true end
     return true
   end
   return false

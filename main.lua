@@ -1,29 +1,47 @@
 math.randomseed(os.time())
 local Maze = require('maze')
-solver = require('maze-solver')
+local solver = require('maze-solver')
 local Stack = require('stack')
-Graph = require('graph')
+local Graph = require('graph')
 
-function love.load(arg)
-  if arg[#arg] == "-debug" then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start() end
---    FULLSCREEN=true
---    MAZE_WIDTH = 1920 - 300
---    INFO_WIDTH = 300
---    WINDOW_HEIGHT = 1080
---    ROWS = 10
+function parseArgs(args)
+  for i , arg in pairs(args) do
+    if arg == "-debug"  then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start()
+    elseif arg == "-c"  then COLS = tonumber(args[i+1]); if COLS < 2 then exit('Minimum Colums: 2') end
+    elseif arg == "-r"  then ROWS = tonumber(args[i+1]); if ROWS < 2 then exit('Minimum Rows: 2') end
+    elseif arg == "-f"  then FULLSCREEN = true
+    elseif arg == "-mh" then WINDOW_HEIGHT = tonumber(args[i+1])
+    elseif arg == "-mw" then MAZE_WIDTH = tonumber(args[i+1])
+    elseif arg == "-p"  then PIERCE_PERCENTAGE = tonumber(args[i+1])
+    end
+  end
+end
 
-  FULLSCREEN=false
-  MAZE_WIDTH    = 600
-  WINDOW_HEIGHT = 600
-  INFO_WIDTH = 200
-  ROWS = 5
-----  COLS = 10
-  COLS = math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
-  PIERCE_PERCENTAGE = 0
+function setParams()
+  FULLSCREEN = FULLSCREEN or false
+  local maxW, maxH = love.window.getDesktopDimensions()
+  MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
+  WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
+  ROWS = ROWS or 10
+  COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
+  
+  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.25
   
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
+  
+  START_ROW , START_COL = 4 , 4
+  LAST_ROW , LAST_COL = ROWS , COLS
 
+end
+
+function love.load(args)
+  INFO_WIDTH = 200
+  
+  parseArgs(args)
+  
+  setParams()
+  
   start()
 
   drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
@@ -35,17 +53,14 @@ function love.update(dt)
 end
 
 function start()
-  maze = Maze:new(ROWS, COLS)
+  maze = Maze:new(ROWS, COLS, START_ROW, START_COL, LAST_ROW, LAST_COL)
 
   recursiveBacktrack(maze, maze:getCell(1, 1))
 
-  maze:getCell(1,1).walls.up = false
-  maze:getCell(ROWS,COLS).walls.down = false
-  
   local keyPos
   repeat
     keyPos = { math.random(1,ROWS),math.random(1,COLS) }
-  until keyPos[1] ~= 1 and keyPos[2] ~= 1 
+  until keyPos[1] ~= START_ROW and keyPos[2] ~= START_COL
   maze:getCell(unpack(keyPos)).hasKey = true
 
   maze:pierce(PIERCE_PERCENTAGE)
@@ -66,7 +81,7 @@ prevs = Stack:new()
 
 keys = {
   ["return"] = function() resolve = not resolve end,
-  ["escape"] = function() love.event.push('quit') end,
+  ["escape"] = function() exit() end,
   ["r"] = start,
   opposite = function(k)
     if k == "left" then return "right" elseif k == "right" then return "left" elseif k == "up" then return "down" elseif k == "down" then return "up" end
@@ -108,12 +123,17 @@ function love.draw()
   if resolve and not res then
     _,res = coroutine.resume(c)
   end
-  if maze.current == maze:getCell(ROWS,COLS) and maze:getCell(ROWS,COLS).open then
-    love.graphics.setColor(10/255, 10/255, 10/255, 1)
-    love.graphics.rectangle("fill",0,0,MAZE_WIDTH,WINDOW_HEIGHT)
+  if maze.current.isLast and maze.current.open then
+    love.graphics.setColor(10 / 255, 10 / 255, 10 / 255, 1)
+    love.graphics.rectangle("fill", 0, 0, MAZE_WIDTH, WINDOW_HEIGHT)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("YOU WIN!",0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
+    love.graphics.printf("YOU WIN!", 0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
   end
+end
+
+function exit(exitError)
+  print(exitError or '')
+  os.exit(exitError and -1 or 0)
 end
 
 -- complexity (nm)

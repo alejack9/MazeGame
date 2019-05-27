@@ -1,58 +1,52 @@
 directions = require("directions")
 
 Graph = {
-    nodes = {}
+  nodes = {}
 }
 
 function Graph.new(self)
-    local obj = {
-        nodes = {}
-    }
-    setmetatable(obj, self)
-    self.__index = self
-    return obj
+  local obj = {
+    nodes = {}
+  }
+  setmetatable(obj, self)
+  self.__index = self
+  return obj
 end
 
 function Graph.tostring(self) 
-    local toReturn = ""
-    for _,node in pairs(self.nodes) do
-        toReturn = toReturn..node.cell:tostring() .. "\n"
-        toReturn = toReturn.."Children : "
-        for _,child in pairs(node.children) do
-            toReturn = toReturn..child:tostring() .. " "
-        end
-        toReturn = toReturn .. "\n\n"
+  local toReturn = ""
+  for _,node in pairs(self.nodes) do
+    toReturn = toReturn..node.cell:tostring() .. "\n"
+    toReturn = toReturn.."Children : "
+    for _,child in pairs(node.children) do
+      toReturn = toReturn..child:tostring() .. " "
     end
-    return toReturn
+    toReturn = toReturn .. "\n\n"
+  end
+  return toReturn
 end
 
 
 
 function shallowcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in pairs(orig) do
-            copy[orig_key] = orig_value
-        end
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
+  local copy = {}
+  for orig_key, orig_value in pairs(orig) do
+    copy[orig_key] = orig_value
+  end
+  return copy
 end
 
-function Graph._DFS(self,maze,current)
+function Graph._DFS(self, maze, current)
   local _children = maze:getNeighborsWithoutWalls(current)
   local toWork = shallowcopy(_children)
-  
-  if #_children == 1 and _children[1].visited and not current.hasKey and current ~= maze:getCell(maze.rows,maze.cols) then
+
+  if #_children == 1 and _children[1].visited and not current.hasKey and not current.isLast then
     return true
   end
-  
+
   table.insert( self.nodes, {cell = current, children = _children })
   current.visited = true
-  
+
   local i = 1
   for _,v in ipairs(toWork) do
 --    if not v.visited then self:_DFS(maze, v) end
@@ -66,18 +60,18 @@ function Graph._DFS(self,maze,current)
     i = i + 1
   end
 
-  if #_children == 1 and _children[1].visited  and not current.hasKey and current ~= maze:getCell(maze.rows,maze.cols) then
+  if #_children == 1 and _children[1].visited  and not current.hasKey and not current.isLast then
     return true
   end
 end
 
-function Graph.DFS(self, maze)
+function Graph.DFS(self, maze, start)
   for row = 1, maze.rows do
     for cell = 1, maze.cols do
       maze:getCell(row,cell).visited = false
     end
   end
-  self:_DFS(maze, maze:getCell(1,1))
+  self:_DFS(maze, start)
 end
 
 --function Graph.scanAllNodes(self, maze, current)
@@ -94,7 +88,7 @@ end
 
 function Graph.build(self, maze, current )
 --  self:scanAllNodes(maze, current)
-  self:DFS(maze)
+  self:DFS(maze, maze.start)
 end
 
 return Graph
