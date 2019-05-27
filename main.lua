@@ -8,13 +8,13 @@ function parseArgs(args)
   for i , arg in pairs(args) do
     if arg == "-debug"  then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start()
     elseif arg == "-c"  then COLS = tonumber(args[i+1]); if COLS < 2 then exit('Minimum Colums: 2') end
-    elseif arg == "-r"  then ROWS = tonumber(args[i+1]); if ROWS < 2 then exit('Minimum Rows: 2') end
-    elseif arg == "-f"  then FULLSCREEN = true
-    elseif arg == "-mh" then WINDOW_HEIGHT = tonumber(args[i+1])
-    elseif arg == "-mw" then MAZE_WIDTH = tonumber(args[i+1])
-    elseif arg == "-p"  then PIERCE_PERCENTAGE = tonumber(args[i+1])
-    end
-  end
+  elseif arg == "-r"  then ROWS = tonumber(args[i+1]); if ROWS < 2 then exit('Minimum Rows: 2') end
+elseif arg == "-f"  then FULLSCREEN = true
+elseif arg == "-mh" then WINDOW_HEIGHT = tonumber(args[i+1])
+elseif arg == "-mw" then MAZE_WIDTH = tonumber(args[i+1])
+elseif arg == "-p"  then PIERCE_PERCENTAGE = tonumber(args[i+1])
+end
+end
 end
 
 function setParams()
@@ -24,12 +24,12 @@ function setParams()
   WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
   ROWS = ROWS or 10
   COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
-  
+
   PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.25
-  
+
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
-  
+
   START_ROW , START_COL = 4 , 4
   LAST_ROW , LAST_COL = ROWS , COLS
 
@@ -37,11 +37,11 @@ end
 
 function love.load(args)
   INFO_WIDTH = 200
-  
+
   parseArgs(args)
-  
+
   setParams()
-  
+
   start()
 
   drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
@@ -117,7 +117,7 @@ end
 
 
 function love.draw()
-    love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+  love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
 --  love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   maze:draw(width, height)
   if resolve and not res then

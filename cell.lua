@@ -41,8 +41,8 @@ function Cell.draw(self, width, height)
   end
   if self.isLast then
     if
-      self.open then  love.graphics.setColor(0, 176 / 255, 0, 100)
-      else            love.graphics.setColor(150 / 255, 95 / 255, 0, 100)
+    self.open then  love.graphics.setColor(0, 176 / 255, 0, 100)
+    else            love.graphics.setColor(150 / 255, 95 / 255, 0, 100)
     end
     love.graphics.rectangle("fill", x, y, width, height)
   end

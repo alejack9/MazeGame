@@ -41,7 +41,7 @@ function Stack.pop(self, num)
 end
 
 function Stack.length(self)
-    return #self._et
+  return #self._et
 end
 
 function Stack.draw(self, drawFun)

@@ -17,7 +17,7 @@ function Maze.new(self, _rows, _cols, startRow, startCol, lastRow, lastCol)
   for i = 1, _rows do
     obj.grid[i] = {}
     for j = 1, _cols do
-        obj.grid[i][j] = Cell:new(i,j)
+      obj.grid[i][j] = Cell:new(i,j)
     end
   end
   obj.grid[lastRow][lastCol].open = false
@@ -121,7 +121,7 @@ function Maze.pierce(self, percentage)
       row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
       wall = walls[math.random(1, 4)]
     until not self:isValid(row, col) or self:isValid(row + directions[wall][1], col + directions[wall][2])
-      self:removeWall(self:getCell(row, col), self:getCell(row + directions[wall][1], col + directions[wall][2]))
+    self:removeWall(self:getCell(row, col), self:getCell(row + directions[wall][1], col + directions[wall][2]))
   end
 end
 

@@ -6,8 +6,8 @@ function solve (current, finish, maze)
   local neighbors = maze:getNeighborsWithoutWalls(current)
   if #neighbors == 0 then coroutine.yield(false, 0) end
   if #neighbors == 1 then 
-      coroutine.yield( false, 1)
-      solve(neighbors[1], finish, maze)
+    coroutine.yield( false, 1)
+    solve(neighbors[1], finish, maze)
   end
   coroutine.yield(false, #neighbors)
   local coroutines = {}
@@ -17,13 +17,13 @@ function solve (current, finish, maze)
   local cres = false
   local index = 1
   while not cres and #coroutines > 0 do
-      _,cres,n = coroutine.resume( coroutines[index], neighbors[index], finish, maze )
-      if(not cres and n == 0) then
-          table.remove( coroutines, index )
-          table.remove( neighbors, index )
-      end
-      index = ((index) % #coroutines) + 1
-      coroutine.yield( cres, #coroutines )
+    _,cres,n = coroutine.resume( coroutines[index], neighbors[index], finish, maze )
+    if(not cres and n == 0) then
+      table.remove( coroutines, index )
+      table.remove( neighbors, index )
+    end
+    index = ((index) % #coroutines) + 1
+    coroutine.yield( cres, #coroutines )
   end
   coroutine.yield( cres, 0)
 end
