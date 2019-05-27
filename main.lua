@@ -7,49 +7,59 @@ Graph = require('graph')
 function love.load(arg)
   if arg[#arg] == "-debug" then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start() end
 --    FULLSCREEN=true
---    WINDOW_WIDTH = 1920
+--    MAZE_WIDTH = 1920 - 300
+--    INFO_WIDTH = 300
 --    WINDOW_HEIGHT = 1080
---    ROWS = 100
---    COLS = math.ceil(ROWS * 1.75)
+--    ROWS = 10
 
-    MAZE_WIDTH = 800
-    INFO_WIDTH = 200
-    WINDOW_HEIGHT = 800
-    ROWS = 10
-    COLS = 10
-    PIERCE_PERCENTAGE = 0.5
-    width = MAZE_WIDTH / COLS
-    height = WINDOW_HEIGHT / ROWS
-    
-    start()
-    
-    drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, false)
+  FULLSCREEN=false
+  MAZE_WIDTH    = 600
+  WINDOW_HEIGHT = 600
+  INFO_WIDTH = 200
+  ROWS = 5
+----  COLS = 10
+  COLS = math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
+  PIERCE_PERCENTAGE = 0
+  
+  width = MAZE_WIDTH / COLS
+  height = WINDOW_HEIGHT / ROWS
+
+  start()
+
+  drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
 end
 
 
 function love.update(dt)
-    love.timer.sleep(1/30 - dt)
+  love.timer.sleep(1/30 - dt)
 end
 
 function start()
-    maze = Maze:new(ROWS, COLS)
-    
-    recursiveBacktrack(maze, maze:getCell(1, 1))
+  maze = Maze:new(ROWS, COLS)
 
-    maze.grid[1][1].walls.up = false
-    maze.grid[ROWS][COLS].walls.down = false
-    maze.grid[math.random(1,ROWS)][math.random(1,COLS)].hasKey = true
-    maze:pierce(PIERCE_PERCENTAGE)
+  recursiveBacktrack(maze, maze:getCell(1, 1))
 
-    graph = Graph:new()
-    graph:build(maze, maze:getCell(1, 1))
+  maze:getCell(1,1).walls.up = false
+  maze:getCell(ROWS,COLS).walls.down = false
+  
+  local keyPos
+  repeat
+    keyPos = { math.random(1,ROWS),math.random(1,COLS) }
+  until keyPos[1] ~= 1 and keyPos[2] ~= 1 
+  maze:getCell(unpack(keyPos)).hasKey = true
 
-    resolve = false
-    for _, rrow in ipairs(maze.grid) do for _,cell in ipairs(rrow) do cell.visited = false end end
-    c = coroutine.create(solver)
-    coroutine.resume(c, maze:getCell(1,1), maze:getCell(ROWS,COLS), maze)
-    res = false
-    steps = 0
+  maze:pierce(PIERCE_PERCENTAGE)
+
+  graph = Graph:new()
+  graph:build(maze, maze:getCell(1, 1))
+  print(graph:tostring())
+
+  resolve = false
+  for _, rrow in ipairs(maze.grid) do for _,cell in ipairs(rrow) do cell.visited = false end end
+  c = coroutine.create(solver)
+  coroutine.resume(c, maze:getCell(1,1), maze:getCell(ROWS,COLS), maze)
+  res = false
+  steps = 0
 end
 
 prevs = Stack:new()
@@ -85,43 +95,44 @@ function love.keypressed(k)
 end
 
 function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
-    love.window.setFullscreen(FULLSCREEN and true or false)
-    love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT)
+  FULLSCREEN = FULLSCREEN and true or false
+  if FULLSCREEN then love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {fullscreen = true, fullscreentype = "desktop"})
+  else love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT) end
 end
 
 
 function love.draw()
-    --love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-    love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-    maze:draw(width, height)
-    if resolve and not res then
-        _,res = coroutine.resume(c)
-    end
-    if maze.current == maze:getCell(ROWS,COLS) and maze:getCell(ROWS,COLS).open then
-      love.graphics.setColor(10/255, 10/255, 10/255, 1)
-      love.graphics.rectangle("fill",0,0,MAZE_WIDTH,WINDOW_HEIGHT)
-      love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.printf("YOU WIN!",0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
-    end
+    love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+--  love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+  maze:draw(width, height)
+  if resolve and not res then
+    _,res = coroutine.resume(c)
+  end
+  if maze.current == maze:getCell(ROWS,COLS) and maze:getCell(ROWS,COLS).open then
+    love.graphics.setColor(10/255, 10/255, 10/255, 1)
+    love.graphics.rectangle("fill",0,0,MAZE_WIDTH,WINDOW_HEIGHT)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.printf("YOU WIN!",0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
+  end
 end
 
 -- complexity (nm)
 function recursiveBacktrack(maze, current, visited)
-    visited = visited and visited + 1 or 0 
-    current.visited = true
-    if visited == maze.rows * maze.cols then
-        return true
+  visited = visited and visited + 1 or 0 
+  current.visited = true
+  if visited == maze.rows * maze.cols then
+    return true
+  end
+  repeat
+    local neighbors = maze:getNeighborsNotVisited(current)
+    if #neighbors == 0 then
+      return false
     end
-    repeat
-      local neighbors = maze:getNeighborsNotVisited(current)
-      if #neighbors == 0 then
-          return false
-      end
-      local next = neighbors[math.random(1, #neighbors)]
-      maze:removeWall(current, next)
+    local next = neighbors[math.random(1, #neighbors)]
+    maze:removeWall(current, next)
 --      Node.addChild(node,Node.new(next, 0))
 --    until recursiveBacktrack(maze, next, visited, node.children[#(node.children)])
-    until recursiveBacktrack(maze, next, visited)
+  until recursiveBacktrack(maze, next, visited)
 end
 
 -- old (2nm)

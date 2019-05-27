@@ -39,13 +39,26 @@ function Maze.getNeighborsNotVisited(self, cell)
   return toReturn
 end
 
+--function Maze.getNeighborsWithoutWalls(self, cell)
+--  local toReturn = {}
+--  for direction, step in pairs(directions) do
+--    if self:isValid(cell.row + step[1], cell.col + step[2]) then
+--      local target = self:getCell(cell.row + step[1], cell.col + step[2])
+--      --if not target.visited and not cell.walls[direction] then
+--      if target.visited and not cell.walls[direction] then
+--        table.insert(toReturn, target)
+--      end
+--    end
+--  end
+--  return toReturn  
+--end
 function Maze.getNeighborsWithoutWalls(self, cell)
   local toReturn = {}
   for direction, step in pairs(directions) do
     if self:isValid(cell.row + step[1], cell.col + step[2]) then
       local target = self:getCell(cell.row + step[1], cell.col + step[2])
       --if not target.visited and not cell.walls[direction] then
-      if target.visited and not cell.walls[direction] then
+      if not cell.walls[direction] then
         table.insert(toReturn, target)
       end
     end
