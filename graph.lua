@@ -1,4 +1,4 @@
-directions = require("directions")
+local directions = unpack(require('directions'))
 
 Graph = {
   nodes = {}
@@ -37,7 +37,8 @@ function shallowcopy(orig)
 end
 
 function Graph._DFS(self, maze, current)
-  local _children = maze:getNeighborsWithoutWalls(current)
+--  local _children = maze:getNeighborsWithoutWalls(current)
+  local _children = maze:getNeighbors(current, function(next, current, direction) return not current.walls[direction] end)
   local toWork = shallowcopy(_children)
 
   if #_children == 1 and _children[1].visited and not current.hasKey and not current.isLast then

@@ -3,18 +3,24 @@ local Maze = require('maze')
 local solver = require('maze-solver')
 local Stack = require('stack')
 local Graph = require('graph')
+local directions , opposite = unpack(require('directions'))
 
 function parseArgs(args)
   for i , arg in pairs(args) do
     if arg == "-debug"  then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start()
-    elseif arg == "-c"  then COLS = tonumber(args[i+1]); if COLS < 2 then exit('Minimum Colums: 2') end
-  elseif arg == "-r"  then ROWS = tonumber(args[i+1]); if ROWS < 2 then exit('Minimum Rows: 2') end
-elseif arg == "-f"  then FULLSCREEN = true
-elseif arg == "-mh" then WINDOW_HEIGHT = tonumber(args[i+1])
-elseif arg == "-mw" then MAZE_WIDTH = tonumber(args[i+1])
-elseif arg == "-p"  then PIERCE_PERCENTAGE = tonumber(args[i+1])
-end
-end
+    elseif arg == "-c"  then
+      COLS = tonumber(args[i+1])
+      if COLS < 2 then exit('Minimum Colums: 2') end
+    elseif arg == "-r"  then
+      ROWS = tonumber(args[i+1])
+      if ROWS < 2 then exit('Minimum Rows: 2') end
+    elseif arg == "-f"  then FULLSCREEN = true
+    elseif arg == "-mh" then WINDOW_HEIGHT = tonumber(args[i+1])
+    elseif arg == "-mw" then MAZE_WIDTH = tonumber(args[i+1])
+    elseif arg == "-p"  then PIERCE_PERCENTAGE = tonumber(args[i+1])
+    end
+
+  end
 end
 
 function setParams()
@@ -36,14 +42,11 @@ function setParams()
 end
 
 function love.load(args)
+
   INFO_WIDTH = 200
-
   parseArgs(args)
-
   setParams()
-
   start()
-
   drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
 end
 
@@ -83,22 +86,22 @@ keys = {
   ["return"] = function() resolve = not resolve end,
   ["escape"] = function() exit() end,
   ["r"] = start,
-  opposite = function(k)
-    if k == "left" then return "right" elseif k == "right" then return "left" elseif k == "up" then return "down" elseif k == "down" then return "up" end
-  end,
   __index = function(t, k)
     k = (k == 'a' and 'left' or (k == 'd' and 'right' or (k == 's' and 'down' or (k == 'w' and 'up' or k))))
-    if k ~= 'left' and k ~= 'right' and k ~= 'down' and k ~= 'up' then return function() end end
+    if k ~= 'left' and k ~= 'right' and k ~= 'down' and k ~= 'up' then
+      return function() end
+    end
     return function()
-      if maze:move(k) then
-        if k == keys.opposite(prevs:top()) then
+      local valid, key = unpack(maze:move(k))
+      if valid then
+        if k == opposite(prevs:top()) then
           prevs:pop()
           steps = steps - 1;
         else
           prevs:push(k)
           steps = steps + 1
-          -- to continue
         end
+        if key then prevs:clear() end
       end
     end
   end
@@ -144,7 +147,7 @@ function recursiveBacktrack(maze, current, visited)
     return true
   end
   repeat
-    local neighbors = maze:getNeighborsNotVisited(current)
+    local neighbors = maze:getNeighbors(current, function(next) return not next.visited end)
     if #neighbors == 0 then
       return false
     end

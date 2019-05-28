@@ -1,5 +1,5 @@
 local Cell = require('cell')
-local directions = require('directions')
+local directions = unpack(require('directions'))
 
 Maze = {
   grid = {},
@@ -35,41 +35,19 @@ function Maze.getCell(self, row, col)
   return self.grid[row][col];
 end
 
-function Maze.getNeighborsNotVisited(self, cell)
-  toReturn = {}
-  for _, step in pairs(directions) do
-    if self:isValid(cell.row + step[1], cell.col + step[2]) and not self:getCell(cell.row + step[1],cell.col + step[2]).visited then
-      table.insert(toReturn, self:getCell(cell.row + step[1], cell.col + step[2]))
-    end
-  end
-  return toReturn
-end
 
---function Maze.getNeighborsWithoutWalls(self, cell)
---  local toReturn = {}
---  for direction, step in pairs(directions) do
---    if self:isValid(cell.row + step[1], cell.col + step[2]) then
---      local target = self:getCell(cell.row + step[1], cell.col + step[2])
---      --if not target.visited and not cell.walls[direction] then
---      if target.visited and not cell.walls[direction] then
---        table.insert(toReturn, target)
---      end
---    end
---  end
---  return toReturn  
---end
-function Maze.getNeighborsWithoutWalls(self, cell)
+-- predicate: (next, current, direction) -> boolean
+function Maze.getNeighbors(self, cell, predicate)
   local toReturn = {}
   for direction, step in pairs(directions) do
     if self:isValid(cell.row + step[1], cell.col + step[2]) then
-      local target = self:getCell(cell.row + step[1], cell.col + step[2])
-      --if not target.visited and not cell.walls[direction] then
-      if not cell.walls[direction] then
-        table.insert(toReturn, target)
+      local next = self:getCell(cell.row + step[1], cell.col + step[2])
+      if predicate(next, cell, direction) then
+        table.insert(toReturn, next)
       end
     end
   end
-  return toReturn  
+  return toReturn
 end
 
 function Maze.resetVisited(self)
@@ -131,10 +109,14 @@ function Maze.move(self, direction)
     Cell.toogleCurrent(next)
     Cell.toogleCurrent(self:getCell(self.current.row, self.current.col))
     self.current = next
-    if next.hasKey then next.hasKey = false; self.last.open = true end
-    return true
+    local key = next.hasKey
+    if key then
+      next.hasKey = false
+      self.last.open = true
+    end
+    return {true, key}
   end
-  return false
+  return {false}
 end
 
 

@@ -11,6 +11,10 @@ function Stack.new(self, v, obj)
   return obj
 end
 
+function Stack.clear(self)
+  self._et = {}
+end
+
 function Stack.top(self)
   return self._et[#self._et]
 end

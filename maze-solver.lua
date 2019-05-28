@@ -1,9 +1,9 @@
-directions = require('directions')
+local directions = unpack(require('directions'))
 
 function solve (current, finish, maze)
   current.visited = true
   if current == finish then coroutine.yield(true, 0) end
-  local neighbors = maze:getNeighborsWithoutWalls(current)
+  local neighbors = maze:getNeighbors(current, function(next, current, direction) return not current.walls[direction] end)
   if #neighbors == 0 then coroutine.yield(false, 0) end
   if #neighbors == 1 then 
     coroutine.yield( false, 1)
