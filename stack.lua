@@ -11,6 +11,10 @@ function Stack.new(self, v, obj)
   return obj
 end
 
+function Stack.clear(self)
+  self._et = {}
+end
+
 function Stack.top(self)
   return self._et[#self._et]
 end
@@ -41,7 +45,7 @@ function Stack.pop(self, num)
 end
 
 function Stack.length(self)
-    return #self._et
+  return #self._et
 end
 
 function Stack.draw(self, drawFun)

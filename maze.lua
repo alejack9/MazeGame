@@ -1,25 +1,34 @@
 local Cell = require('cell')
-local directions = require('directions')
+local directions = unpack(require('directions'))
 
 Maze = {
   grid = {},
   current = {}
 }
 
-function Maze.new(self, rows, cols, obj)
-  obj = obj or {}
-  obj.rows = rows
-  obj.cols = cols
-  obj.grid = self.grid
-  for i = 1, rows do
+function Maze.new(self, _rows, _cols, startRow, startCol, lastRow, lastCol)
+  lastRow   , lastCol   = lastRow   or _rows  , lastCol   or _cols
+  startRow  , startCol  = startRow  or    1   , startCol  or    1
+  local obj = {
+    rows = _rows,
+    cols = _cols,
+    grid = {}
+  }
+  for i = 1, _rows do
     obj.grid[i] = {}
-    for j = 1, cols do
-        obj.grid[i][j] = Cell:new(i,j)
+    for j = 1, _cols do
+      obj.grid[i][j] = Cell:new(i,j)
     end
   end
-  obj.grid[rows][cols].open = false
-  self.current = self.grid[1][1]
-  self.grid[1][1]:toogleCurrent()
+
+  obj.start = obj.grid[startRow][startCol]
+  obj.current = obj.grid[startRow][startCol]
+  obj.grid[startRow][startCol]:toogleCurrent()
+
+  obj.grid[lastRow][lastCol].open = false
+  obj.grid[lastRow][lastCol].isLast = true
+  obj.last = obj.grid[lastRow][lastCol]
+
   setmetatable(obj, self)
   self.__index = self
   return obj
@@ -29,28 +38,23 @@ function Maze.getCell(self, row, col)
   return self.grid[row][col];
 end
 
-function Maze.getNeighborsNotVisited(self, cell)
-  toReturn = {}
-  for _, step in pairs(directions) do
-    if self:isValid(cell.row + step[1], cell.col + step[2]) and not self:getCell(cell.row + step[1],cell.col + step[2]).visited then
-      table.insert(toReturn, self:getCell(cell.row + step[1], cell.col + step[2]))
-    end
-  end
-  return toReturn
+function Maze.setKey(self, row, col)
+  maze.keyPos = maze:getCell(row, col)
+  maze.keyPos.hasKey = true
 end
 
-function Maze.getNeighborsWithoutWalls(self, cell)
+-- predicate: (next, current, direction) -> boolean
+function Maze.getNeighbors(self, cell, predicate)
   local toReturn = {}
   for direction, step in pairs(directions) do
     if self:isValid(cell.row + step[1], cell.col + step[2]) then
-      local target = self:getCell(cell.row + step[1], cell.col + step[2])
-      --if not target.visited and not cell.walls[direction] then
-      if target.visited and not cell.walls[direction] then
-        table.insert(toReturn, target)
+      local next = self:getCell(cell.row + step[1], cell.col + step[2])
+      if predicate(next, cell, direction) then
+        table.insert(toReturn, next)
       end
     end
   end
-  return toReturn  
+  return toReturn
 end
 
 function Maze.resetVisited(self)
@@ -62,6 +66,7 @@ function Maze.resetVisited(self)
 end
 
 function Maze.removeWall(self, cell1, cell2)
+  if not cell2 then print(cell1:tostring()) end
   if cell1.row - cell2.row == 0 then
     if cell1.col - cell2.col == 1 then
       cell1.walls.left = false
@@ -95,10 +100,13 @@ end
 
 function Maze.pierce(self, percentage)
   local walls = {"down", "up", "right", "left"}
-  for i=1, math.ceil(percentage * self.rows * self.cols) do
-      local row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
-      local wall = walls[math.random(1, 4)]
-      self:removeWall(self:getCell(row, col), self:getCell(row + directions[wall][1], col + directions[wall][2]))
+  for i = 1, math.ceil(percentage * self.rows * self.cols) do
+    local row, col, wall
+    repeat
+      row, col = math.random(2, self.rows - 1), math.random(2, self.cols - 1)
+      wall = walls[math.random(1, 4)]
+    until not self:isValid(row, col) or self:isValid(row + directions[wall][1], col + directions[wall][2])
+    self:removeWall(self:getCell(row, col), self:getCell(row + directions[wall][1], col + directions[wall][2]))
   end
 end
 
@@ -108,10 +116,14 @@ function Maze.move(self, direction)
     Cell.toogleCurrent(next)
     Cell.toogleCurrent(self:getCell(self.current.row, self.current.col))
     self.current = next
-    if next.hasKey then next.hasKey = false; self:getCell(self.rows, self.cols).open = true end
-    return true
+    local key = next.hasKey
+    if key then
+      next.hasKey = false
+      self.last.open = true
+    end
+    return {true, key}
   end
-  return false
+  return {false}
 end
 
 
