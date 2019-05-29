@@ -81,11 +81,12 @@ function start()
 end
 
 prevs = Stack:new()
-
+showMaze = false
 keys = {
   ["return"] = function() resolve = not resolve end,
   ["escape"] = function() exit() end,
   ["r"] = start,
+  ["v"] = function() showMaze = not showMaze end,
   __index = function(t, k)
     k = (k == 'a' and 'left' or (k == 'd' and 'right' or (k == 's' and 'down' or (k == 'w' and 'up' or k))))
     if k ~= 'left' and k ~= 'right' and k ~= 'down' and k ~= 'up' then
@@ -122,18 +123,21 @@ end
 function love.draw()
   love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
 --  love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-  maze:draw(width, height)
-  if resolve and not res then
-    _,res = coroutine.resume(c)
+  if not showMaze then
+    maze:draw(width, height)
+    if resolve and not res then
+      _,res = coroutine.resume(c)
+    end
+    if maze.current.isLast and maze.current.open then
+      love.graphics.setColor(10 / 255, 10 / 255, 10 / 255, 1)
+      love.graphics.rectangle("fill", 0, 0, MAZE_WIDTH, WINDOW_HEIGHT)
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.printf("YOU WIN!", 0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
+    end
+--  love.graxphics.clear( )
+  else
+    graph:draw(width, height)
   end
-  if maze.current.isLast and maze.current.open then
-    love.graphics.setColor(10 / 255, 10 / 255, 10 / 255, 1)
-    love.graphics.rectangle("fill", 0, 0, MAZE_WIDTH, WINDOW_HEIGHT)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.printf("YOU WIN!", 0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
-  end
-  love.graphics.clear( )
-  graph:draw(width, height)
 end
 
 function exit(exitError)

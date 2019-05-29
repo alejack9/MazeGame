@@ -46,8 +46,8 @@ function Graph.tostring(self)
   return toReturn
 end
 
-function Graph.positionToIndex(self, maze, cell)
-  return maze.cols * (cell.row - 1) + cell.col
+function Graph.positionToIndex(self, mazeCols, cell)
+  return mazeCols * (cell.row - 1) + cell.col
 end
 
 function shallowcopy(orig)
@@ -66,7 +66,7 @@ function Graph._DFS(self, maze, current, heuristic)
     return true
   end
 
-  local POSITION = self:positionToIndex(maze, current)
+  local POSITION = self:positionToIndex(maze.cols, current)
 
   self.nodes[POSITION] = {cell = current, children = _children, h = heuristic(maze, current) }
   current.visited = true
@@ -76,7 +76,7 @@ function Graph._DFS(self, maze, current, heuristic)
     if not v.visited then
       local toRemove = self:_DFS(maze, v, heuristic)
       if toRemove then
-        local POS2 =  self:positionToIndex(maze, v)
+        local POS2 =  self:positionToIndex(maze.cols, v)
         table.remove(_children, i)
         self.nodes[POS2] = nil
         i = i - 1
