@@ -20,12 +20,15 @@ function Maze.new(self, _rows, _cols, startRow, startCol, lastRow, lastCol)
       obj.grid[i][j] = Cell:new(i,j)
     end
   end
-  obj.grid[lastRow][lastCol].open = false
-  obj.grid[lastRow][lastCol].isLast = true
+
   obj.start = obj.grid[startRow][startCol]
-  obj.last = obj.grid[lastRow][lastCol]
   obj.current = obj.grid[startRow][startCol]
   obj.grid[startRow][startCol]:toogleCurrent()
+
+  obj.grid[lastRow][lastCol].open = false
+  obj.grid[lastRow][lastCol].isLast = true
+  obj.last = obj.grid[lastRow][lastCol]
+
   setmetatable(obj, self)
   self.__index = self
   return obj
@@ -35,6 +38,10 @@ function Maze.getCell(self, row, col)
   return self.grid[row][col];
 end
 
+function Maze.setKey(self, row, col)
+  maze.keyPos = maze:getCell(row, col)
+  maze.keyPos.hasKey = true
+end
 
 -- predicate: (next, current, direction) -> boolean
 function Maze.getNeighbors(self, cell, predicate)

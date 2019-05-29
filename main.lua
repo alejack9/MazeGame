@@ -28,7 +28,7 @@ function setParams()
   local maxW, maxH = love.window.getDesktopDimensions()
   MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
   WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
-  ROWS = ROWS or 10
+  ROWS = ROWS or 5
   COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
 
   PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.25
@@ -36,7 +36,7 @@ function setParams()
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
 
-  START_ROW , START_COL = 4 , 4
+  START_ROW , START_COL = 1 , 1
   LAST_ROW , LAST_COL = ROWS , COLS
 
 end
@@ -64,13 +64,13 @@ function start()
   repeat
     keyPos = { math.random(1,ROWS),math.random(1,COLS) }
   until keyPos[1] ~= START_ROW and keyPos[2] ~= START_COL
-  maze:getCell(unpack(keyPos)).hasKey = true
+  maze:setKey(unpack(keyPos))
 
   maze:pierce(PIERCE_PERCENTAGE)
 
   graph = Graph:new()
   graph:build(maze, maze:getCell(1, 1))
-  print(graph:tostring())
+--  print(graph:tostring())
 
   resolve = false
   for _, rrow in ipairs(maze.grid) do for _,cell in ipairs(rrow) do cell.visited = false end end
@@ -132,6 +132,8 @@ function love.draw()
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.printf("YOU WIN!", 0, WINDOW_HEIGHT / 2, MAZE_WIDTH / 2.5, "center", 0, 2.5, 5)
   end
+  love.graphics.clear( )
+  graph:draw(width, height)
 end
 
 function exit(exitError)
