@@ -7,10 +7,13 @@ function solve( start, finish, graph, cols )
         }
     }
 
-    local _,isFinished = coroutine.resume( stack_list[1].c, 0, start, finish, graph, cols)
+    local _,isFinished,toContinue = coroutine.resume( stack_list[1].c, 0, start, finish, graph, cols)
 
     while not isFinished do
-        _,isFinished = coroutine.resume(stack_list[1].c)
+        _,isFinished,toContinue = coroutine.resume(stack_list[1].c)
+        if not toContinue then
+          table.remove( stack_list, 1)
+        end
         table.sort( stack_list, function ( a, b ) return a.f < b.f end )
     end
 
@@ -22,14 +25,14 @@ function doStep (g, current, finish, graph, cols)
     current.visited = true
   
     if current == finish then 
-      coroutine.yield(true) end
+      coroutine.yield(true, false) end
   
     local children = getChildren(cols, current)
   
-    if #children == 0 then coroutine.yield(false) end
+    if #children == 0 then coroutine.yield(false, false) end
   
     if #children == 1 then 
-        coroutine.yield( false )
+        coroutine.yield( false, true )
         doStep(g + 1, children[1], finish, graph, cols)
     end
 
@@ -39,15 +42,15 @@ function doStep (g, current, finish, graph, cols)
   
   function fork(g, children, finish, graph, cols) 
     for _,child in pairs(children) do
-      table.insert( threadList, 1, {
+      table.insert( stack_list, 1, {
           f = g + graph.nodes[graph:positionToIndex(cols, child)].hE,
           c = coroutine.create( doStep )
       })
-      if coroutine.resume(threadList[1], g, child, finish, graph, cols) then
-        return true
+      if coroutine.resume(stack_list[1].c, g, child, finish, graph, cols) then
+        return true, false
       end
     end
-    return false
+    return false, true
   end
 
 function getChildren ( cols, cell )
