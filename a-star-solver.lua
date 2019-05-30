@@ -2,12 +2,12 @@
 function solve( start, finish, graph, cols )
     local stack_list = {
         {
-            f = 0 + start.h,
+            f = 0 + graph.nodes[graph:positionToIndex(cols, start)].hE,
             c = coroutine.create( doStep )
         }
     }
 
-    local isFinished = coroutine.resume( stack_list[1].c, 0, start, finish, graph, cols)
+    local _,isFinished = coroutine.resume( stack_list[1].c, 0, start, finish, graph, cols)
 
     while not isFinished do
         _,isFinished = coroutine.resume(stack_list[1].c)
@@ -40,7 +40,7 @@ function doStep (g, current, finish, graph, cols)
   function fork(g, children, finish, graph, cols) 
     for _,child in pairs(children) do
       table.insert( threadList, 1, {
-          f = g + graph.nodes[graph:positionToIndex(cols, child)].h,
+          f = g + graph.nodes[graph:positionToIndex(cols, child)].hE,
           c = coroutine.create( doStep )
       })
       if coroutine.resume(threadList[1], g, child, finish, graph, cols) then
@@ -60,3 +60,5 @@ function getChildren ( cols, cell )
     end
     return toReturn
 end
+
+return solve

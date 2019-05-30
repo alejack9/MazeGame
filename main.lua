@@ -1,6 +1,6 @@
 math.randomseed(os.time())
 local Maze = require('maze')
-local solver = require('maze-solver')
+local solver = require('a-star-solver')
 local Stack = require('stack')
 local Graph = require('graph')
 local directions , opposite = unpack(require('directions'))
@@ -36,9 +36,6 @@ function setParams()
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
 
-  START_ROW , START_COL = 1 , 1
-  LAST_ROW , LAST_COL = ROWS , COLS
-
 end
 
 function love.load(args)
@@ -56,6 +53,8 @@ function love.update(dt)
 end
 
 function start()
+  START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
+  LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
   maze = Maze:new(ROWS, COLS, START_ROW, START_COL, LAST_ROW, LAST_COL)
 
   recursiveBacktrack(maze, maze:getCell(1, 1))
@@ -70,20 +69,18 @@ function start()
 
   graph = Graph:new()
   graph:build(maze, maze:getCell(1, 1))
+  maze:resetVisited()
+  solver(maze.start, maze.last, graph, maze.cols)
+--  print(maze:tostring())
 --  print(graph:tostring())
 
-  resolve = false
-  for _, rrow in ipairs(maze.grid) do for _,cell in ipairs(rrow) do cell.visited = false end end
-  c = coroutine.create(solver)
-  coroutine.resume(c, maze:getCell(1,1), maze:getCell(ROWS,COLS), maze)
-  res = false
   steps = 0
 end
 
 prevs = Stack:new()
 showMaze = false
 keys = {
-  ["return"] = function() resolve = not resolve end,
+--  ["return"] = function() resolve = not resolve end,
   ["escape"] = function() exit() end,
   ["r"] = start,
   ["v"] = function() showMaze = not showMaze end,
@@ -125,9 +122,6 @@ function love.draw()
 --  love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   if not showMaze then
     maze:draw(width, height)
-    if resolve and not res then
-      _,res = coroutine.resume(c)
-    end
     if maze.current.isLast and maze.current.open then
       love.graphics.setColor(10 / 255, 10 / 255, 10 / 255, 1)
       love.graphics.rectangle("fill", 0, 0, MAZE_WIDTH, WINDOW_HEIGHT)

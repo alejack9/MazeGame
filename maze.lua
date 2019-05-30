@@ -22,7 +22,7 @@ function Maze.new(self, _rows, _cols, startRow, startCol, lastRow, lastCol)
   end
 
   obj.start = obj.grid[startRow][startCol]
-  obj.current = obj.grid[startRow][startCol]
+  obj.current = obj.start
   obj.grid[startRow][startCol]:toogleCurrent()
 
   obj.grid[lastRow][lastCol].open = false
@@ -125,7 +125,6 @@ function Maze.move(self, direction)
   end
   return {false}
 end
-
 
 table.filter = function(t, filterIter)
   local out = {}

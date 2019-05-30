@@ -29,7 +29,7 @@ function Graph.draw(self, width, height)
     local x = (node.cell.col - 1) * width
     local y = (node.cell.row - 1) * height
     love.graphics.setColor(0,0,0,1)
-    love.graphics.printf(node.h,love.graphics.newFont("VeraBd.ttf",16) , x, y + height / 2, width, "center")
+    love.graphics.printf(node.hE ..'\n'.. node.hK,love.graphics.newFont("VeraBd.ttf",16) , x, y + height / 2, width, "center")
   end
 end
 
@@ -58,7 +58,7 @@ function shallowcopy(orig)
   return copy
 end
 
-function Graph._DFS(self, maze, current, heuristic)
+function Graph._DFS(self, maze, current, heuristicExit, heuristicKey)
   local _children = maze:getNeighbors(current, function(next, current, direction) return not current.walls[direction] end)
   local toWork = shallowcopy(_children)
 
@@ -68,13 +68,13 @@ function Graph._DFS(self, maze, current, heuristic)
 
   local POSITION = self:positionToIndex(maze.cols, current)
 
-  self.nodes[POSITION] = {cell = current, children = _children, h = heuristic(maze, current) }
+  self.nodes[POSITION] = {cell = current, children = _children, hE = heuristicExit(current, maze.last), hK = heuristicKey(current, maze.keyPos) }
   current.visited = true
 
   local i = 1
   for _,v in ipairs(toWork) do
     if not v.visited then
-      local toRemove = self:_DFS(maze, v, heuristic)
+      local toRemove = self:_DFS(maze, v, heuristicExit, heuristicKey)
       if toRemove then
         local POS2 =  self:positionToIndex(maze.cols, v)
         table.remove(_children, i)
@@ -90,22 +90,18 @@ function Graph._DFS(self, maze, current, heuristic)
   end
 end
 
-function Graph.DFS(self, maze, start, heuristic)
-  for row = 1, maze.rows do
-    for cell = 1, maze.cols do
-      maze:getCell(row,cell).visited = false
-    end
-  end
-  self:_DFS(maze, start, heuristic)
+function Graph.DFS(self, maze, start, heuristicExit, heuristicKey)
+  maze:resetVisited()
+  self:_DFS(maze, start, heuristicExit, heuristicKey)
 end
 
-manhattan = function(maze, cell)
-  return math.abs(maze.last.row - cell.row) + math.abs(maze.last.col - cell.col) 
+manhattan = function(start, target)
+  return math.abs(target.row - start.row) + math.abs(target.col - start.col) 
 end
 
-function Graph.build(self, maze, current, heuristic)
-  heuristic = heuristic or manhattan
-  self:DFS(maze, maze.start, heuristic)
+function Graph.build(self, maze, current, heuristicExit, heuristicKey)
+  heuristicExit, heuristicKey = heuristic or manhattan , heuristic or manhattan 
+  self:DFS(maze, maze.start, heuristicExit, heuristicKey)
 end
 
 return Graph
