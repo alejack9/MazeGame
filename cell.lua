@@ -35,8 +35,16 @@ function Cell.draw(self, width, height)
   -- RBG : 255 = LUA : 1 
   local x = (self.col - 1) * width
   local y = (self.row - 1) * height
-  if self.visited then
+  --[[if self.visited then
     love.graphics.setColor(162 / 255, 162 / 255, 162 / 255, 100)
+    love.graphics.rectangle("fill", x, y, width, height)
+  end]]
+  if self.status and self.status == "OPEN" then
+    love.graphics.setColor(33 / 255, 150 / 255 ,243 / 255 ,255)
+    love.graphics.rectangle("fill", x, y, width, height)
+  end
+  if self.status and self.status == "CLOSED" then
+    love.graphics.setColor(96 / 255, 125 / 255, 139 / 255 ,255)
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.isLast then

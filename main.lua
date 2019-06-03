@@ -28,10 +28,10 @@ function setParams()
   local maxW, maxH = love.window.getDesktopDimensions()
   MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
   WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
-  ROWS = ROWS or 5
+  ROWS = ROWS or 10
   COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
 
-  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.25
+  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.9
 
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
@@ -49,12 +49,14 @@ end
 
 
 function love.update(dt)
-  love.timer.sleep(1/30 - dt)
+  love.timer.sleep(1/60 - dt)
 end
 
 function start()
   START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
+-- START_ROW , START_COL = 1,1
   LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
+--  LAST_ROW , LAST_COL = ROWS, COLS
   maze = Maze:new(ROWS, COLS, START_ROW, START_COL, LAST_ROW, LAST_COL)
 
   recursiveBacktrack(maze, maze:getCell(1, 1))
@@ -70,7 +72,26 @@ function start()
   graph = Graph:new()
   graph:build(maze, maze:getCell(1, 1))
   maze:resetVisited()
-  solver(maze.start, maze.last, graph, maze.cols)
+
+  toKey = coroutine.create( solver )
+  toExit = coroutine.create( solver )
+
+  solvedToExit = false
+  continueToExit = true
+
+  solvedToKey = false
+  continueToKey = true
+
+  _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[graph:positionToIndex(COLS, maze.start)], 
+                                                          graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
+                                                          graph, COLS, function(node) return node.hK end)
+  
+  _,solvedToExit,continueToExit = coroutine.resume( toExit, graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
+                                                            graph.nodes[graph:positionToIndex(COLS, maze.last)], 
+                                                            graph, COLS, function(node) return node.hE end)
+
+
+
 --  print(maze:tostring())
 --  print(graph:tostring())
 
@@ -119,9 +140,43 @@ end
 
 function love.draw()
   love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
---  love.graphics.printf(graph:tostring(), MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+  
+  if continueToExit or not solvedToExit then
+    _,solvedToExit,continueToExit = coroutine.resume( toExit )
+  end
+  if continueToKey or not solvedToKey then
+    _,solvedToKey,continueToKey = coroutine.resume( toKey )
+  end
+
   if not showMaze then
     maze:draw(width, height)
+
+    if solvedToKey then
+      love.graphics.setColor(0, 255, 0, 255)
+      local current = graph.nodes[graph:positionToIndex(COLS, maze.keyPos)]
+      local i = 1
+      while not (current.parent == nil) do
+        i = i + 1
+        --love.graphics.printf(current.cell:tostring(), MAZE_WIDTH, 10+ i*15, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+        love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
+                           current.parent.cell.col * width - width/2, current.parent.cell.row * height - height/2)
+        current = current.parent
+      end
+    end
+
+    if solvedToExit then
+      love.graphics.setColor(255, 0, 0, 255)
+      local current = graph.nodes[graph:positionToIndex(COLS, maze.last)]
+      local i = 1
+      while not (current.parent == nil) do
+        i = i + 1
+        --love.graphics.printf(current.cell:tostring(), MAZE_WIDTH, 10+ i*15, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+        love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
+                           current.parent.cell.col * width - width/2, current.parent.cell.row * height - height/2)
+        current = current.parent
+      end
+    end
+
     if maze.current.isLast and maze.current.open then
       love.graphics.setColor(10 / 255, 10 / 255, 10 / 255, 1)
       love.graphics.rectangle("fill", 0, 0, MAZE_WIDTH, WINDOW_HEIGHT)

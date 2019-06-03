@@ -96,4 +96,6 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+test.lua
+
 # End of https://www.gitignore.io/api/lua,linux,windows,visualstudiocode

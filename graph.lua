@@ -68,7 +68,7 @@ function Graph._DFS(self, maze, current, heuristicExit, heuristicKey)
 
   local POSITION = self:positionToIndex(maze.cols, current)
 
-  self.nodes[POSITION] = {cell = current, children = _children, hE = heuristicExit(current, maze.last), hK = heuristicKey(current, maze.keyPos) }
+  self.nodes[POSITION] = {cell = current, children = _children, staus = "", hE = heuristicExit(current, maze.last), hK = heuristicKey(current, maze.keyPos) }
   current.visited = true
 
   local i = 1
