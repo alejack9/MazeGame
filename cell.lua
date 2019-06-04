@@ -47,7 +47,7 @@ function Cell.draw(self, width, height)
     love.graphics.setColor(255 / 255, 125 / 255, 139 / 255 ,100)
     love.graphics.rectangle("fill", x, y, width, height)
   end
-  
+
   if self.status and self.status == "OPENTOKEY" then
     love.graphics.setColor(255 / 255, 0/ 255 ,0/ 255 ,100)
     love.graphics.rectangle("fill", x, y, width, height)

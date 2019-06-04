@@ -54,7 +54,7 @@ end
 
 function start()
 --  START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
- START_ROW , START_COL = 1,1
+  START_ROW , START_COL = 1,1
 --  LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
   LAST_ROW , LAST_COL = ROWS, COLS
   maze = Maze:new(ROWS, COLS, START_ROW, START_COL, LAST_ROW, LAST_COL)
@@ -83,12 +83,12 @@ function start()
   continueToKey = true
 
   _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[graph:positionToIndex(COLS, maze.start)], 
-                                                          graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
-                                                          graph, COLS, function(node) return node.hK end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toKey"] = parent end)
- 
+    graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
+    graph, COLS, function(node) return node.hK end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toKey"] = parent end)
+
   _,solvedToExit,continueToExit = coroutine.resume( toExit, graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
-                                                            graph.nodes[graph:positionToIndex(COLS, maze.last)], 
-                                                            graph, COLS, function(node) return node.hE end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toExit"] = parent end)
+    graph.nodes[graph:positionToIndex(COLS, maze.last)], 
+    graph, COLS, function(node) return node.hE end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toExit"] = parent end)
   steps = 0
 end
 
@@ -144,9 +144,9 @@ function love.draw()
 
   if not showMaze then
     maze:draw(width, height)
-    
+
     if solvedToKey then
-      
+
       love.graphics.setColor(0, 255, 0, 255)
       local current = graph.nodes[graph:positionToIndex(COLS, maze.keyPos)]
       local i = 1
@@ -154,7 +154,7 @@ function love.draw()
         i = i + 1
         --love.graphics.printf(current.cell:tostring(), MAZE_WIDTH, 10+ i*15, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
         love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
-                           current.parent["toKey"].cell.col * width - width/2, current.parent["toKey"].cell.row * height - height/2)
+          current.parent["toKey"].cell.col * width - width/2, current.parent["toKey"].cell.row * height - height/2)
         current = current.parent["toKey"]
       end
     end
@@ -166,7 +166,7 @@ function love.draw()
         i = i + 1
         --love.graphics.printf(current.cell:tostring(), MAZE_WIDTH, 10+ i*15, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
         love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
-                           current.parent["toExit"].cell.col * width - width/2, current.parent["toExit"].cell.row * height - height/2)
+          current.parent["toExit"].cell.col * width - width/2, current.parent["toExit"].cell.row * height - height/2)
         current = current.parent["toExit"]
       end
     end
@@ -205,20 +205,3 @@ function recursiveBacktrack(maze, current, visited)
 --    until recursiveBacktrack(maze, next, visited, node.children[#(node.children)])
   until recursiveBacktrack(maze, next, visited)
 end
-
--- old (2nm)
---function recursiveBacktrackWithStack(maze, current, stack)
---    stack = stack or Stack:new(current)
---    current.visited = true
---    if stack:length() == 0 then
---        return
---    end
---    local neighbors = maze:getNeighbors(current)
---    if #neighbors == 0 then
---        return recursiveBacktrackWithStack(maze, stack:pop(), stack)
---    end
---    local next = neighbors[math.random(1, #neighbors)]
---    stack:push(next)
---    maze:removeWall(current, next)
---    recursiveBacktrackWithStack(maze, next, stack)
---end
