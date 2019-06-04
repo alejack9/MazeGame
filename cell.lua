@@ -39,12 +39,21 @@ function Cell.draw(self, width, height)
     love.graphics.setColor(162 / 255, 162 / 255, 162 / 255, 100)
     love.graphics.rectangle("fill", x, y, width, height)
   end]]
-  if self.status and self.status == "OPEN" then
-    love.graphics.setColor(33 / 255, 150 / 255 ,243 / 255 ,255)
+  if self.status and self.status == "CLOSEDTOKEY" then
+    love.graphics.setColor(96 / 255, 125 / 255, 139 / 255 ,100)
     love.graphics.rectangle("fill", x, y, width, height)
   end
-  if self.status and self.status == "CLOSED" then
-    love.graphics.setColor(96 / 255, 125 / 255, 139 / 255 ,255)
+  if self.status and self.status == "CLOSEDTOEXIT" then
+    love.graphics.setColor(255 / 255, 125 / 255, 139 / 255 ,100)
+    love.graphics.rectangle("fill", x, y, width, height)
+  end
+  
+  if self.status and self.status == "OPENTOKEY" then
+    love.graphics.setColor(255 / 255, 0/ 255 ,0/ 255 ,100)
+    love.graphics.rectangle("fill", x, y, width, height)
+  end
+  if self.status and self.status == "OPENTOEXIT" then
+    love.graphics.setColor(105 / 255, 0 / 255 ,0 / 255 ,100)
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.isLast then
