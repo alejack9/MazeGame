@@ -23,21 +23,23 @@ end]]
 
 function solve( start, finish, graph, mazeCols, heuristic )
 
-  OPEN = {}
-  CLOSE = {}
-  setOpen(start)
+  local OPEN = {}
+  local CLOSE = {}
+  setOpen(start, OPEN)
   start.g = 0
+  local _finish = finish
+  local _heuristic = heuristic
 
-  _solve = function ()
+  _solve = function (OPEN, CLOSE, finish, heuristic)
     local current = OPEN[1]--table.remove( OPEN, 1)
     if current == finish then
       coroutine.yield( true, false ) 
     end
-    for _,child in pairs(getNotClosedChildren(current, graph, mazeCols)) do
+    for _,child in pairs(getNotClosedChildren(current, graph, mazeCols, CLOSE)) do
       --child.parent = current
       --if child.hE == 0 then coroutine.yield(true,false) end
-      if not isOpen(child) then
-         setOpen(child)
+      if not isOpen(child, OPEN) then
+         setOpen(child, OPEN)
          child.parent = current
          child.g = current.g + 1
          child.f = heuristic(child) + child.g
@@ -47,8 +49,8 @@ function solve( start, finish, graph, mazeCols, heuristic )
         child.f = heuristic(child) + child.g
       end
     end
-    setClose(table.remove( OPEN, 1 ))
-    if not isOpenSetEmpty() then
+    setClose(table.remove( OPEN, 1 ),CLOSE)
+    if not isOpenSetEmpty(OPEN) then
       table.sort( OPEN, function (a, b)
         --if a.f == b.f then
         --  return a.hE < b.hE
@@ -58,17 +60,17 @@ function solve( start, finish, graph, mazeCols, heuristic )
         --end 
       )
       coroutine.yield( false, true )
-      _solve()
+      _solve(OPEN, CLOSE, finish, heuristic)
     else
       coroutine.yield( false, false )
     end
   end
 
-  return _solve()
+  return _solve(OPEN, CLOSE, _finish, _heuristic)
 end
 
 
-function getNotClosedChildren( node, graph, mazeCols)
+function getNotClosedChildren( node, graph, mazeCols, CLOSE)
   toReturn = {}
   for _,child in pairs(node.children) do
     --if not (graph.nodes[graph:positionToIndex(mazeCols, child)].status == "CLOSED") then
@@ -87,7 +89,7 @@ function getNotClosedChildren( node, graph, mazeCols)
   return toReturn
 end
 
-function isOpen ( node )
+function isOpen ( node, OPEN )
   for _,n in pairs(OPEN) do
     if node == n then
       return true
@@ -96,17 +98,17 @@ function isOpen ( node )
   return false
 end
 
-function setOpen ( node )
+function setOpen ( node, OPEN )
   node.cell.status = "OPEN"
   table.insert( OPEN, node )
 end
 
-function setClose (node)
+function setClose (node, CLOSE)
   node.cell.status = "CLOSED"
   table.insert( CLOSE, node )
 end
 
-function isOpenSetEmpty ( )
+function isOpenSetEmpty (OPEN )
   return #OPEN == 0
 end
 

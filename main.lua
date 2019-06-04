@@ -73,8 +73,8 @@ function start()
   graph:build(maze, maze:getCell(1, 1))
   maze:resetVisited()
 
-  toKey = coroutine.create( solver )
-  toExit = coroutine.create( solver )
+  toKey = coroutine.create(solver)
+  toExit = coroutine.create(solver)
 
   solvedToExit = false
   continueToExit = true
@@ -85,7 +85,7 @@ function start()
   _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[graph:positionToIndex(COLS, maze.start)], 
                                                           graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
                                                           graph, COLS, function(node) return node.hK end)
-  
+ 
   _,solvedToExit,continueToExit = coroutine.resume( toExit, graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
                                                             graph.nodes[graph:positionToIndex(COLS, maze.last)], 
                                                             graph, COLS, function(node) return node.hE end)
@@ -140,7 +140,7 @@ end
 
 function love.draw()
   love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-  
+
   if continueToExit or not solvedToExit then
     _,solvedToExit,continueToExit = coroutine.resume( toExit )
   end
@@ -150,8 +150,9 @@ function love.draw()
 
   if not showMaze then
     maze:draw(width, height)
-
+    
     if solvedToKey then
+      
       love.graphics.setColor(0, 255, 0, 255)
       local current = graph.nodes[graph:positionToIndex(COLS, maze.keyPos)]
       local i = 1
@@ -163,7 +164,6 @@ function love.draw()
         current = current.parent
       end
     end
-
     if solvedToExit then
       love.graphics.setColor(255, 0, 0, 255)
       local current = graph.nodes[graph:positionToIndex(COLS, maze.last)]
