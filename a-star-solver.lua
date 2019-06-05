@@ -16,12 +16,10 @@ function solve( start, finish, graph, mazeCols, heuristic, setParentFn )
       if not isOpen(child, OPEN) then
         setOpen(child, OPEN, finish)
         setParent(child, current)
---        child.parent = current
         child.g = current.g + 1
         child.f = heuristic(child) + child.g
       elseif child.f > heuristic(child) + current.g + 1 then
         setParent(child, current)
---        child.parent = current
         child.g = current.g + 1
         child.f = heuristic(child) + child.g
       end
