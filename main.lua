@@ -53,10 +53,10 @@ function love.update(dt)
 end
 
 function start()
---  START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
-  START_ROW , START_COL = 1,1
---  LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
-  LAST_ROW , LAST_COL = ROWS, COLS
+  START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
+--  START_ROW , START_COL = 1,1
+  LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
+--  LAST_ROW , LAST_COL = ROWS, COLS
   maze = Maze:new(ROWS, COLS, START_ROW, START_COL, LAST_ROW, LAST_COL)
 
   recursiveBacktrack(maze, maze:getCell(1, 1))
@@ -90,12 +90,13 @@ function start()
     graph.nodes[graph:positionToIndex(COLS, maze.last)], 
     graph, COLS, function(node) return node.hE end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toExit"] = parent end)
   steps = 0
+  resolve = false
 end
 
 prevs = Stack:new()
 showMaze = false
 keys = {
---  ["return"] = function() resolve = not resolve end,
+ ["return"] = function() resolve = not resolve end,
   ["escape"] = function() exit() end,
   ["r"] = start,
   ["v"] = function() showMaze = not showMaze end,
@@ -135,10 +136,10 @@ end
 function love.draw()
   love.graphics.printf("steps: " .. steps, MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
 
-  if continueToExit or not solvedToExit then
+  if resolve and (continueToExit or not solvedToExit) then
     _,solvedToExit,continueToExit = coroutine.resume( toExit )
   end
-  if continueToKey or not solvedToKey then
+  if resolve and (continueToKey or not solvedToKey) then
     _,solvedToKey,continueToKey = coroutine.resume( toKey )
   end
 
