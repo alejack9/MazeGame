@@ -24,7 +24,7 @@ function parseArgs(args)
 end
 
 function setParams()
-  FULLSCREEN = FULLSCREEN or true
+  FULLSCREEN = FULLSCREEN or false
   local maxW, maxH = love.window.getDesktopDimensions()
   MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
   WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
@@ -70,7 +70,7 @@ function start()
   maze:pierce(PIERCE_PERCENTAGE)
 
   graph = Graph:new()
-  graph:build(maze, maze:getCell(1, 1))
+  graph:build(maze, maze.start)
   maze:resetVisited()
 
   toKey = coroutine.create(solver)
@@ -82,13 +82,13 @@ function start()
   solvedToKey = false
   continueToKey = true
 
-  _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[graph:positionToIndex(COLS, maze.start)], 
-    graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
-    graph, COLS, function(node) return node.hK end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toKey"] = parent end)
+  _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[maze.start.row][maze.start.col], 
+    graph.nodes[maze.keyPos.row][maze.keyPos.col], 
+    graph, function(node) return node.hK end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toKey"] = parent end)
 
-  _,solvedToExit,continueToExit = coroutine.resume( toExit, graph.nodes[graph:positionToIndex(COLS, maze.keyPos)], 
-    graph.nodes[graph:positionToIndex(COLS, maze.last)], 
-    graph, COLS, function(node) return node.hE end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toExit"] = parent end)
+  _,solvedToExit,continueToExit = coroutine.resume( toExit, graph.nodes[maze.keyPos.row][maze.keyPos.col],
+    graph.nodes[maze.last.row][maze.last.col],
+    graph, function(node) return node.hE end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toExit"] = parent end)
   steps = 0
   resolve = false
 end
@@ -147,29 +147,10 @@ function love.draw()
     maze:draw(width, height)
 
     if solvedToKey then
-
-      love.graphics.setColor(0, 255, 0, 255)
-      local current = graph.nodes[graph:positionToIndex(COLS, maze.keyPos)]
-      local i = 1
-      while current.parent and current.parent["toKey"] do
-        i = i + 1
-        --love.graphics.printf(current.cell:tostring(), MAZE_WIDTH, 10+ i*15, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-        love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
-          current.parent["toKey"].cell.col * width - width/2, current.parent["toKey"].cell.row * height - height/2)
-        current = current.parent["toKey"]
-      end
+      printSolution(maze.keyPos, function(parent) return parent["toKey"] end, {0, 255, 0, 255})
     end
     if solvedToExit then
-      love.graphics.setColor(255, 0, 0, 255)
-      local current = graph.nodes[graph:positionToIndex(COLS, maze.last)]
-      local i = 1
-      while current.parent and current.parent["toExit"]  do
-        i = i + 1
-        --love.graphics.printf(current.cell:tostring(), MAZE_WIDTH, 10+ i*15, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-        love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
-          current.parent["toExit"].cell.col * width - width/2, current.parent["toExit"].cell.row * height - height/2)
-        current = current.parent["toExit"]
-      end
+      printSolution(maze.last, function(parent) return parent["toExit"] end, {0, 0, 255, 255})
     end
 
     if maze.current.isLast and maze.current.open then
@@ -180,6 +161,18 @@ function love.draw()
     end
   else
     graph:draw(width, height)
+  end
+end
+
+function printSolution(target, selectParent, color)
+  love.graphics.setColor(color)
+  local current = graph.nodes[target.row][target.col]
+  local i = 1
+  while current.parent and selectParent(current.parent) do
+    i = i + 1
+    love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
+    selectParent(current.parent).cell.col * width - width/2, selectParent(current.parent).cell.row * height - height/2)
+    current = selectParent(current.parent)
   end
 end
 

@@ -1,4 +1,4 @@
-function solve( start, finish, graph, mazeCols, heuristic, setParentFn )
+function solve( start, finish, graph, heuristic, setParentFn )
   local OPEN = {}
   local CLOSE = {}
   setOpen(start, OPEN, finish)
@@ -12,16 +12,12 @@ function solve( start, finish, graph, mazeCols, heuristic, setParentFn )
     if current == finish then
       coroutine.yield( true, false )
     end
-    for _,child in pairs(getNotClosedChildren(current, graph, mazeCols, CLOSE)) do
+    for _,child in pairs(getNotClosedChildren(current, graph, CLOSE)) do
       if not isOpen(child, OPEN) then
         setOpen(child, OPEN, finish)
-        setParent(child, current)
-        child.g = current.g + 1
-        child.f = heuristic(child) + child.g
+        handleChild(child, current, setParent, heuristic)
       elseif child.f > heuristic(child) + current.g + 1 then
-        setParent(child, current)
-        child.g = current.g + 1
-        child.f = heuristic(child) + child.g
+        handleChild(child, current, setParent, heuristic)
       end
     end
     setClose(table.remove( OPEN, 1 ),CLOSE, finish)
@@ -41,21 +37,27 @@ function solve( start, finish, graph, mazeCols, heuristic, setParentFn )
 end
 
 
-function getNotClosedChildren( node, graph, mazeCols, CLOSE)
+function getNotClosedChildren( node, graph, CLOSE)
   toReturn = {}
   for _,child in pairs(node.children) do
     local toAdd = true
     for _,n in pairs(CLOSE) do
-      if child == n.cell then
+      if child == n then
         toAdd = false
         break
       end
     end
     if toAdd then 
-      table.insert( toReturn, graph.nodes[graph:positionToIndex(mazeCols, child)] )
+      table.insert( toReturn, child )
     end
   end
   return toReturn
+end
+
+function handleChild (child, parent, setParent, heuristic)
+  setParent(child, parent)
+  child.g = parent.g + 1
+  child.f = heuristic(child) + child.g
 end
 
 function isOpen ( node, OPEN )
