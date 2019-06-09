@@ -1,3 +1,4 @@
+require('colors')
 Cell = {
   walls = {
     up = true,
@@ -32,7 +33,6 @@ function Cell.new(self, row, col)
 end
 
 function Cell.draw(self, width, height)
-  -- RBG : 255 = LUA : 1 
   local x = (self.col - 1) * width
   local y = (self.row - 1) * height
   --[[if self.visited then
@@ -40,43 +40,43 @@ function Cell.draw(self, width, height)
     love.graphics.rectangle("fill", x, y, width, height)
   end]]
   if self.status and self.status == "CLOSEDTOKEY" then
-    love.graphics.setColor(96 / 255, 125 / 255, 139 / 255 ,100)
+    love.graphics.setColor(unpack(CLOSEDTOKEY))
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.status and self.status == "CLOSEDTOEXIT" then
-    love.graphics.setColor(255 / 255, 125 / 255, 139 / 255 ,100)
+    love.graphics.setColor(unpack(CLOSEDTOEXIT))
     love.graphics.rectangle("fill", x, y, width, height)
   end
 
   if self.status and self.status == "OPENTOKEY" then
-    love.graphics.setColor(255 / 255, 0/ 255 ,0/ 255 ,100)
+    love.graphics.setColor(unpack(OPENTOKEY))
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.status and self.status == "OPENTOEXIT" then
-    love.graphics.setColor(105 / 255, 0 / 255 ,0 / 255 ,100)
+    love.graphics.setColor(unpack(OPENTOEXIT))
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.isLast then
     if
-    self.open then  love.graphics.setColor(0, 176 / 255, 0, 100)
-    else            love.graphics.setColor(150 / 255, 95 / 255, 0, 100)
+    self.open then  love.graphics.setColor(unpack(OPENEDLAST))
+    else            love.graphics.setColor(unpack(CLOSEDLAST))
     end
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.hasKey then
     local key = love.graphics.newImage('key.png')
     local quad = love.graphics.newQuad(0, 0, key:getWidth(), key:getHeight(), width,height)
-    love.graphics.setColor(1, 223 / 255, 0, 100)
+    love.graphics.setColor(unpack(KEYCELL))
     love.graphics.ellipse("fill", x + width / 2, y + height / 2, width / 2, height / 2)
     love.graphics.setColor(1, 1, 1, 100)
     love.graphics.draw(key, quad, x, y)
   end
 
   if self.current then
-    love.graphics.setColor(48 / 255, 87 / 255, 0, 100)
+    love.graphics.setColor(unpack(CURRENT))
     love.graphics.ellipse("fill",x+width/2,y+height/2,width/2,height/2)
   end
-  love.graphics.setColor(1, 1, 1, 100)
+  love.graphics.setColor(unpack(WALLS))
   if self.walls.up then love.graphics.line(x, y, x + width, y) end
   if self.walls.right then love.graphics.line(x + width, y, x + width, y + height) end
   if self.walls.down then love.graphics.line(x, y + height, x + width, y + height) end
