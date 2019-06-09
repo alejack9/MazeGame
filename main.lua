@@ -170,7 +170,7 @@ function love.draw()
     end
 
     if maze.current.isLast and maze.current.open then
-      love.graphics.setColor(0 / 255, 255 / 255, 255 / 255, 1)
+      love.graphics.setColor(unpack(INFO))
       love.graphics.printf("YOU WIN!", MAZE_WIDTH, 50, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
     end
   else
@@ -187,7 +187,6 @@ function printSolution(target, selectParent, color)
     love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
       selectParent(current.parent).cell.col * width - width/2, selectParent(current.parent).cell.row * height - height/2)
     current = selectParent(current.parent)
-    -- to fix
     if target == maze.keyPos and not done.key or target == maze.last and not done.exit then 
       steps["solver"] = steps["solver"] + 1
     end
