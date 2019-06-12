@@ -1,13 +1,12 @@
-function solve( start, finish, graph, heuristic, setParentFn )
+function solve( start, finish, graph, getAttributes )
   local OPEN = {}
   local CLOSE = {}
   setOpen(start, OPEN, finish)
-  start.g = 0
+  getAttributes(start).g = 0
   local _finish = finish
-  local _heuristic = heuristic
-  local setParent = setParentFn
+  local _attributes = getAttributes
 
-  _solve = function (OPEN, CLOSE, finish, heuristic, setParent)
+  _solve = function (OPEN, CLOSE, finish, attributes)
     local current = OPEN[1]
     if current == finish then
       coroutine.yield( true, false )
@@ -15,25 +14,25 @@ function solve( start, finish, graph, heuristic, setParentFn )
     for _,child in pairs(getNotClosedChildren(current, graph, CLOSE)) do
       if not isOpen(child, OPEN) then
         setOpen(child, OPEN, finish)
-        handleChild(child, current, setParent, heuristic)
-      elseif child.f > heuristic(child) + current.g + 1 then
-        handleChild(child, current, setParent, heuristic)
+        handleChild(child, current, attributes)
+      elseif attributes(child).f > attributes(child).h + attributes(current).g + 1 then
+        handleChild(child, current, attributes)
       end
     end
     setClose(table.remove( OPEN, 1 ),CLOSE, finish)
     if not isOpenSetEmpty(OPEN) then
       table.sort( OPEN, function (a, b)
-          return a.f < b.f 
+          return attributes(a).f < attributes(b).f 
         end
       )
       coroutine.yield( false, true )
-      _solve(OPEN, CLOSE, finish, heuristic, setParent)
+      _solve(OPEN, CLOSE, finish, attributes)
     else
       coroutine.yield( false, false )
     end
   end
 
-  return _solve(OPEN, CLOSE, _finish, _heuristic, setParent)
+  return _solve(OPEN, CLOSE, _finish, _attributes)
 end
 
 
@@ -54,10 +53,10 @@ function getNotClosedChildren( node, graph, CLOSE)
   return toReturn
 end
 
-function handleChild (child, parent, setParent, heuristic)
-  setParent(child, parent)
-  child.g = parent.g + 1
-  child.f = heuristic(child) + child.g
+function handleChild (child, parent, attributes)
+  attributes(child).parent = parent
+  attributes(child).g = attributes(parent).g + 1
+  attributes(child).f = attributes(child).h + attributes(child).g
 end
 
 function isOpen ( node, OPEN )

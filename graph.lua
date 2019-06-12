@@ -71,13 +71,20 @@ function shallowcopy(orig)
 end
 
 function Graph.getNode(self, _cell, maze, heuristicExit, heuristicKey)
-    if not self.nodes[_cell.row] then self.nodes[_cell.row] = {}
-else 
-  if self.nodes[_cell.row][_cell.col] then return self.nodes[_cell.row][_cell.col] end
-end
-self.nodes[_cell.row][_cell.col] = {cell = _cell, children = {}, hE = heuristicExit(_cell, maze.last), hK = heuristicKey(_cell, maze.keyPos) }
-return self.nodes[_cell.row][_cell.col]
-  end
+    if not self.nodes[_cell.row] then 
+      self.nodes[_cell.row] = {}
+      else 
+        if self.nodes[_cell.row][_cell.col] then 
+          return self.nodes[_cell.row][_cell.col] end
+      end
+      self.nodes[_cell.row][_cell.col] = {
+        cell = _cell, 
+        children = {},
+        attrToKey = {h = heuristicKey(_cell, maze.keyPos)},
+        attrToExit = {h = heuristicExit(_cell, maze.last)}
+      }
+      return self.nodes[_cell.row][_cell.col]
+    end
 
 function Graph._DFS(self, maze, current, heuristicExit, heuristicKey)
   local _children = maze:getNeighbors(current, function(next, current, direction) return not current.walls[direction] end)

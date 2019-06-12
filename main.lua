@@ -36,7 +36,7 @@ function setParams()
   
   setRandoms()
 
-  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.75
+  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.9
   
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
@@ -93,12 +93,15 @@ function start()
   continueToKey = true
 
   _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[maze.start.row][maze.start.col], 
-    graph.nodes[maze.keyPos.row][maze.keyPos.col], 
-    graph, function(node) return node.hK end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toKey"] = parent end)
+    graph.nodes[maze.keyPos.row][maze.keyPos.col], graph,
+    function (node) return node.attrToKey end
+  )
 
   _,solvedToExit,continueToExit = coroutine.resume( toExit, graph.nodes[maze.keyPos.row][maze.keyPos.col],
-    graph.nodes[maze.last.row][maze.last.col],
-    graph, function(node) return node.hE end, function(child, parent) if not child.parent then child.parent = {} end child.parent["toExit"] = parent end)
+    graph.nodes[maze.last.row][maze.last.col], graph,
+    function (node) return node.attrToExit end
+  )
+  
   steps = { user = 0, solver = 0 }
   resolve = false
   done = { key = false, exit = false }
@@ -161,11 +164,11 @@ function love.draw()
     maze:draw(width, height)
 
     if solvedToKey then
-      printSolution(maze.keyPos, function(parent) return parent["toKey"] end, TOKEYPATH)
+      printSolution(maze.keyPos, function(node) return node.attrToKey end, TOKEYPATH)
       done.key = true
     end
     if solvedToExit then
-      printSolution(maze.last, function(parent) return parent["toExit"] end, TOEXITPATH)
+      printSolution(maze.last, function(node) return node.attrToExit end, TOEXITPATH)
       done.exit = true
     end
 
@@ -178,15 +181,15 @@ function love.draw()
   end
 end
 
-function printSolution(target, selectParent, color)
+function printSolution(target, getAttributes, color)
   local w = love.graphics.getLineWidth()
   love.graphics.setLineWidth( 3 )
   love.graphics.setColor(color)
   local current = graph.nodes[target.row][target.col]
-  while current.parent and selectParent(current.parent) do
+  while getAttributes(current).parent do
     love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
-      selectParent(current.parent).cell.col * width - width/2, selectParent(current.parent).cell.row * height - height/2)
-    current = selectParent(current.parent)
+    getAttributes(current).parent.cell.col * width - width/2, getAttributes(current).parent.cell.row * height - height/2)
+    current = getAttributes(current).parent
     if target == maze.keyPos and not done.key or target == maze.last and not done.exit then 
       steps["solver"] = steps["solver"] + 1
     end
