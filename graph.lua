@@ -37,7 +37,7 @@ function Graph.draw(self, width, height)
         local x = (node.cell.col - 1) * width
         local y = (node.cell.row - 1) * height
         love.graphics.setColor(0,0,0,1)
-        love.graphics.printf(node.hE ..'\n'.. node.hK,love.graphics.newFont("VeraBd.ttf",16) , x, y + height / 2, width, "center")
+--        love.graphics.printf(node.hE ..'\n'.. node.hK,love.graphics.newFont("VeraBd.ttf",16) , x, y + height / 2, width, "center")
       end
     end
   end

@@ -37,7 +37,7 @@ function setParams()
   
   setRandoms()
 
-  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.9
+  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 1.5
   
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
@@ -67,7 +67,7 @@ end
 
 
 function love.update(dt)
-  love.timer.sleep(1/60 - dt)
+  love.timer.sleep(1/2 - dt)
 end
 
 function start()
@@ -104,8 +104,6 @@ function start()
   )
 
   cs = coroutine.create( cSolver )
-  coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], nil, graph.nodes[maze.last.row][maze.last.col])
-  coroutine.resume( cs )
   
   steps = { user = 0, solver = 0 }
   resolve = false
@@ -147,6 +145,7 @@ function love.keypressed(k)
 end
 
 function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
+--  coroutine.resume( cs )
   FULLSCREEN = FULLSCREEN and true or false
   if FULLSCREEN then love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {fullscreen = true, fullscreentype = "desktop"})
   else love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT) end
@@ -154,6 +153,7 @@ end
 
 
 function love.draw()
+  coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col])
   love.graphics.setColor(unpack(INFO))
   love.graphics.printf("User steps: " .. steps["user"], MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   love.graphics.printf("Solver steps: " .. steps["solver"], MAZE_WIDTH, 30, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
