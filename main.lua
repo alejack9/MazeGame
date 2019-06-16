@@ -4,6 +4,7 @@ local solver = require('a-star-solver')
 local Stack = require('stack')
 local Graph = require('graph')
 local directions , opposite = unpack(require('directions'))
+local cSolver = require("circular-solver")
 require('colors')
 
 function parseArgs(args)
@@ -101,6 +102,10 @@ function start()
     graph.nodes[maze.last.row][maze.last.col], graph,
     function (node) return node.attrToExit end
   )
+
+  cs = coroutine.create( cSolver )
+  coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], nil, graph.nodes[maze.last.row][maze.last.col])
+  coroutine.resume( cs )
   
   steps = { user = 0, solver = 0 }
   resolve = false
@@ -152,6 +157,7 @@ function love.draw()
   love.graphics.setColor(unpack(INFO))
   love.graphics.printf("User steps: " .. steps["user"], MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   love.graphics.printf("Solver steps: " .. steps["solver"], MAZE_WIDTH, 30, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
+  --love.graphics.printf(coroutine.status( cs ), MAZE_WIDTH, 60, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
 
   if resolve and (continueToExit or not solvedToExit) then
     _,solvedToExit,continueToExit = coroutine.resume( toExit )
@@ -162,6 +168,10 @@ function love.draw()
 
   if not showMaze then
     maze:draw(width, height)
+
+    -- if coroutine.status( cs ) == "suspended" then
+    --   coroutine.resume( cs )
+    -- end
 
     if solvedToKey then
       printSolution(maze.keyPos, function(node) return node.attrToKey end, TOKEYPATH)

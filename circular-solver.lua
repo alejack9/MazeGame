@@ -1,44 +1,56 @@
-function solve( current, last, graph )
-    
+
+function setVisited (node)
+    node.visited = true
+    node.cell.status = "OPENTOEXIT"
 end
 
-function inside (currentNode, next, graph)
-    currentNode.visited = true
+function getChildren( node )
+    toReturn = {}
+    for _,child in pairs(node.children) do 
+        if not child.visited then table.insert( toReturn, child ) end
+    end
+    return toReturn
+  end
+
+function setup (node, next, finish)
+    setVisited(node)
+    local myNode = node
+    local myNext = next
     coroutine.yield( )
-    local children = getChildrenNotVisited(currentNode, graph)
-    if #children == 0 then error("aaaa") end
-    if #children == 1 then
-        coroutine.resume( next )
-        inside(children[1], next)
+    go(myNode, myNext, finish)
+end
+
+function go (node, next, finish)
+    setVisited(node)
+    if node == finish then coroutine.yield( )
     else
-        local coroutines = {
-            __newindex = function (cors, pos, children)
-                cors[pos] = coroutine.create(inside)
-                coroutine.resume( cors[pos], children[pos], cors[(pos-1) % #coroutines], graph)
-            end
-        }
-        setmetatable(coroutines, coroutines)
-        coroutines[#children] = children
-        local coroutines = {coroutine.create( inside )}
-        for i = 2, #children do
-            table.insert( coroutines, coroutine.create( inside ))
-            coroutine.resume( cor, children[i], coroutines[(i-1) % #coroutines], graph)
+        --coroutine.yield(  )
+        if next then
+            coroutine.resume( next )
+            -- local _,res,nextnext = resume(next)
+            -- if not res then
+            --     next = nextnext
+            -- end
         end
-        -- resume per settaggio parametri
-        coroutine.resume( coroutines[1], children[1], coroutines[#coroutines], graph)
-        -- resume per avvio coroutine
-        coroutine.resume( coroutines[1] )
+        local children = getChildren(node)
+        if #children == 0 then
+            coroutine.yield(  )
+        else
+            if #children == 1 then
+                go(children[1], next, finish)
+            else
+                local c1 = coroutine.create( setup )
+                coroutine.resume( c1, children[#children], next, finish)
+                if #children == 3 then
+                    local c2 = coroutine.create( setup )
+                    coroutine.resume( c2, children[2], c1, finish)
+                    go(children[1], c2, finish)
+                else
+                    go(children[1], c1, finish)
+                end
+            end
+        end
     end
 end
 
-table.filter = function(t, filterIter)
-    local out = {}
-    for k, v in pairs(t) do
-        if filterIter(v, k, t) then table.insert(out,v) end
-    end
-    return out
-end
-
-function getChildrenNotVisited( node, graph )
-    table.filter(node.children, function (n) return not n.visited end)
-end
+return setup
