@@ -97,5 +97,6 @@ $RECYCLE.BIN/
 *.lnk
 
 test.lua
+test_*.lua
 
 # End of https://www.gitignore.io/api/lua,linux,windows,visualstudiocode
