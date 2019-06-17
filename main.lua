@@ -32,7 +32,7 @@ function setParams()
   MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
   WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
   
-  ROWS = ROWS or 30
+  ROWS = ROWS or 90
   COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
   
   setRandoms()
@@ -46,6 +46,7 @@ end
 function setRandoms()
   START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
 --  START_ROW , START_COL = 1,1
+--  START_ROW , START_COL = ROWS/2,COLS/2
   LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
 --  LAST_ROW , LAST_COL = ROWS, COLS
 
@@ -53,7 +54,7 @@ function setRandoms()
   repeat
     keyPos = { math.random(1,ROWS),math.random(1,COLS) }
   until keyPos[1] ~= START_ROW and keyPos[2] ~= START_COL
-  
+--  keyPos = { ROWS/2, COLS/2 }
 end
 
 function love.load(args)
@@ -170,7 +171,7 @@ function love.draw()
   end
 
   if c_resolve and not c_solved then
-    _,c_solved = coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col])
+    _,c_solved = coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col], cs)
   end
 
   if not showMaze then
@@ -180,14 +181,14 @@ function love.draw()
     --   coroutine.resume( cs )
     -- end
     if c_solved then
-      printSolution(maze.last, function(node) return node end, {1, 80/255, 0, 100})
+      printSolution(maze.last, function(node) return node end, CIRCULARPATH)
     end
     if solvedToKey then
-      printSolution(maze.keyPos, function(node) return node.attrToKey end, TOKEYPATH)
+      printSolution(maze.keyPos, function(node) return node.attrToKey end, TOKEYPATH, true)
       done.key = true
     end
     if solvedToExit then
-      printSolution(maze.last, function(node) return node.attrToExit end, TOEXITPATH)
+      printSolution(maze.last, function(node) return node.attrToExit end, TOEXITPATH, true)
       done.exit = true
     end
 
@@ -200,7 +201,7 @@ function love.draw()
   end
 end
 
-function printSolution(target, getAttributes, color)
+function printSolution(target, getAttributes, color, astar)
   local w = love.graphics.getLineWidth()
   love.graphics.setLineWidth( 3 )
   love.graphics.setColor(color)
@@ -209,9 +210,9 @@ function printSolution(target, getAttributes, color)
     love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
     getAttributes(current).parent.cell.col * width - width/2, getAttributes(current).parent.cell.row * height - height/2)
     current = getAttributes(current).parent
-    -- if target == maze.keyPos and not done.key or target == maze.last and not done.exit then 
-    --   steps["solver"] = steps["solver"] + 1
-    -- end
+     if astar and (target == maze.keyPos and not done.key or target == maze.last and not done.exit) then 
+       steps["solver"] = steps["solver"] + 1
+     end
   end
   love.graphics.setLineWidth( w )
 end
