@@ -2,7 +2,10 @@
 function getChildren( node )
   toReturn = {}
   for _,child in pairs(node.children) do 
-    if not child.visited then table.insert( toReturn, child ) end
+    if not child.visited then
+       table.insert( toReturn, child )
+       child.parent = node
+    end
   end
   return toReturn
 end
@@ -22,8 +25,11 @@ function Task.new(node, prevTask, nextTask)
 end
 
 function setVisited (node)
+  if node == nil then
+    print("Ciao")
+  end
   node.visited = true
-  node.cell.status = "OPENTOEXIT"
+  node.cell.status = "CIRCULAR_VISITED"
 end
 
 --function setup (node, prevTask, nextTask, finish)
@@ -37,49 +43,67 @@ function setup(startNode, lastNode)
   local task = Task.new(startNode)
   task.prevTask = nil
   task.nextTask = nil
-  while true do 
-    task = coroutine.resume(task.coroutine, task, lastNode)
-    coroutine.yield()
+  res = false
+  while not res do 
+    _,task,res = coroutine.resume(task.coroutine, task, lastNode)
+    if task == nil then
+      print("Ciao")
+    end
+    print(tostring(task))
+    coroutine.yield(res)
   end
 end
 
+
 function go(task, finish)
-  if task.node == finish then return end
-  coroutine.yield(task)
-  if task.nextTask then coroutine.resume(task.nextTask.coroutine, task.nextTask, finish) end
-  local children = getChildren(task.node)
-  if #children == 0 then return end
-  local tasks = {}
-  table.insert( tasks, Task.new(children[1], task.prevTask, nil))
-  if task.prevTask then
-    task.prevTask.nextTask = tasks[1]
-    for i = 2, #children do
-      table.insert(tasks, Task.new(children[i], tasks[i-1], nil))
-      tasks[i-1].nextTask = tasks[i]
-    end
-    task.nextTask.prevTask = tasks[#children]
-    tasks[#children].nextTask = task.nextTask
---  coroutine.resume(tasks[1].coroutine, tasks[1], finish)
-    coroutine.resume(task.nextTask.coroutine, task.nextTask, finish)
-  else
-    for i = 2, #children do
-      table.insert(tasks, Task.new(children[i], tasks[i-1], nil))
-      tasks[i-1].nextTask = tasks[i]
-    end
-    tasks[#children].nextTask = tasks[1]
-    tasks[1].prevTask = tasks[#children]
-    
-    coroutine.resume(tasks[1].coroutine, tasks[1], finish)
+
+  if task.node == finish then 
+    coroutine.yield(task, true) 
+  end
+  coroutine.yield(task, false)
+
+  if task.nextTask then
+    coroutine.resume(task.nextTask.coroutine, task.nextTask, finish) 
   end
 
---  for i = 2, #children do
---    table.insert(tasks, Task.new(children[i], tasks[i-1], nil))
---    tasks[i-1].nextTask = tasks[i]
---  end
---  task.nextTask.prevTask = tasks[#children]
---  tasks[#children].nextTask = task.nextTask
-----  coroutine.resume(tasks[1].coroutine, tasks[1], finish)
---  coroutine.resume(task.nextTask.coroutine, task.nextTask, finish)
+  local children = getChildren(task.node)
+
+  if #children == 0 then 
+    task.prevTask.nextTask = task.nextTask
+    task.nextTask.prevTask = task.prevTask
+    coroutine.yield(task.nextTask, false)
+
+  else
+    local tasks = {}
+    table.insert( tasks, Task.new(children[1], task.prevTask, nil))
+
+    if task.prevTask then
+      task.prevTask.nextTask = tasks[1]
+      for i = 2, #children do
+        table.insert(tasks, Task.new(children[i], tasks[i-1], nil))
+        tasks[i-1].nextTask = tasks[i]
+      end
+      task.nextTask.prevTask = tasks[#children]
+      tasks[#children].nextTask = task.nextTask
+      coroutine.resume(task.nextTask.coroutine, task.nextTask, finish)
+      -- coroutine.yield(task.nextTask, false)
+    else
+      if #children == 1 then
+        task.node = children[1]
+        go(task, finish)
+      else
+        for i = 2, #children do
+          table.insert(tasks, Task.new(children[i], tasks[i-1], nil))
+          tasks[i-1].nextTask = tasks[i]
+        end
+        tasks[#children].nextTask = tasks[1]
+        tasks[1].prevTask = tasks[#children]
+        coroutine.resume( tasks[1].coroutine, tasks[1], finish )
+        --coroutine.yield(tasks[1], false)
+      end
+    end
+  end
+  print("Fine")
 end
 
 --function go (node, next, finish)

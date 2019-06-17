@@ -56,6 +56,10 @@ function Cell.draw(self, width, height)
     love.graphics.setColor(unpack(OPENTOEXIT))
     love.graphics.rectangle("fill", x, y, width, height)
   end
+  if self.status and self.status == "CIRCULAR_VISITED" then
+    love.graphics.setColor(125/255, 125/255, 179/255, 70)
+    love.graphics.rectangle("fill", x, y, width, height)
+  end
   if self.isLast then
     if
     self.open then  love.graphics.setColor(unpack(OPENEDLAST))

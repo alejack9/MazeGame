@@ -37,7 +37,7 @@ function setParams()
   
   setRandoms()
 
-  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 1.5
+  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 1
   
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
@@ -67,7 +67,7 @@ end
 
 
 function love.update(dt)
-  love.timer.sleep(1/2 - dt)
+  --love.timer.sleep(1/60 - dt)
 end
 
 function start()
@@ -93,6 +93,8 @@ function start()
   solvedToKey = false
   continueToKey = true
 
+  c_solved = false
+
   _,solvedToKey,continueToKey = coroutine.resume( toKey, graph.nodes[maze.start.row][maze.start.col], 
     graph.nodes[maze.keyPos.row][maze.keyPos.col], graph,
     function (node) return node.attrToKey end
@@ -107,6 +109,7 @@ function start()
   
   steps = { user = 0, solver = 0 }
   resolve = false
+  c_resolve = false
   done = { key = false, exit = false }
 end
 
@@ -117,6 +120,7 @@ keys = {
   ["escape"] = function() exit() end,
   ["r"] = start,
   ["v"] = function() showMaze = not showMaze end,
+  ["c"] = function() c_resolve = not c_resolve end,
   __index = function(t, k)
     if maze.current == maze.last and not maze.keyPos.hasKey then return function() end end
     k = (k == 'a' and 'left' or (k == 'd' and 'right' or (k == 's' and 'down' or (k == 'w' and 'up' or k))))
@@ -153,7 +157,6 @@ end
 
 
 function love.draw()
-  coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col])
   love.graphics.setColor(unpack(INFO))
   love.graphics.printf("User steps: " .. steps["user"], MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   love.graphics.printf("Solver steps: " .. steps["solver"], MAZE_WIDTH, 30, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
@@ -166,13 +169,19 @@ function love.draw()
     _,solvedToKey,continueToKey = coroutine.resume( toKey )
   end
 
+  if c_resolve and not c_solved then
+    _,c_solved = coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col])
+  end
+
   if not showMaze then
     maze:draw(width, height)
 
     -- if coroutine.status( cs ) == "suspended" then
     --   coroutine.resume( cs )
     -- end
-
+    if c_solved then
+      printSolution(maze.last, function(node) return node end, {1, 80/255, 0, 100})
+    end
     if solvedToKey then
       printSolution(maze.keyPos, function(node) return node.attrToKey end, TOKEYPATH)
       done.key = true
@@ -200,9 +209,9 @@ function printSolution(target, getAttributes, color)
     love.graphics.line(current.cell.col * width - width/2, current.cell.row * height - height/2,
     getAttributes(current).parent.cell.col * width - width/2, getAttributes(current).parent.cell.row * height - height/2)
     current = getAttributes(current).parent
-    if target == maze.keyPos and not done.key or target == maze.last and not done.exit then 
-      steps["solver"] = steps["solver"] + 1
-    end
+    -- if target == maze.keyPos and not done.key or target == maze.last and not done.exit then 
+    --   steps["solver"] = steps["solver"] + 1
+    -- end
   end
   love.graphics.setLineWidth( w )
 end
