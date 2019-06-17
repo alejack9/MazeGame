@@ -37,7 +37,7 @@ function setParams()
   
   setRandoms()
 
-  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 1
+  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.75
   
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
@@ -171,7 +171,7 @@ function love.draw()
   end
 
   if c_resolve and not c_solved then
-    _,c_solved = coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col], cs)
+    _,c_solved = coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col])
   end
 
   if not showMaze then
