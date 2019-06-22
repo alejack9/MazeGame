@@ -70,18 +70,18 @@ end
 
 function setOpen ( node, OPEN, finish )
   if finish.cell == maze.keyPos then
-    node.cell.status = "OPENTOKEY"
+    node.cell.status["OPENTOKEY"] = true
   else
-    node.cell.status = "OPENTOEXIT"
+    node.cell.status["OPENTOEXIT"] = true
   end
   table.insert( OPEN, node )
 end
 
 function setClose (node, CLOSE, finish)
   if finish.cell == maze.keyPos then
-    node.cell.status = "CLOSEDTOKEY"
+    node.cell.status["CLOSEDTOEXIT"] = true
   else
-    node.cell.status = "CLOSEDTOEXIT"
+    node.cell.status["CLOSEDTOEXIT"] = true
   end
   table.insert( CLOSE, node )
 end

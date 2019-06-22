@@ -132,4 +132,10 @@ function Graph.build(self, maze, start, heuristicExit, heuristicKey)
   self:DFS(maze, maze.start, heuristicExit, heuristicKey)
 end
 
+function Graph.resetVisited(self)
+  for _,n in pairs(self.nodes) do
+    n.visited = false
+  end
+end
+
 return Graph

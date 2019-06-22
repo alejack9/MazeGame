@@ -32,7 +32,7 @@ function setParams()
   MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
   WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
   
-  ROWS = ROWS or 90
+  ROWS = ROWS or 60
   COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
   
   setRandoms()
@@ -58,7 +58,7 @@ function setRandoms()
 end
 
 function love.load(args)
-  love.graphics.setBackgroundColor(BACKGROUND)
+  love.graphics.setBackgroundColor(colors.BACKGROUND)
   INFO_WIDTH = 200
   parseArgs(args)
   setParams()
@@ -150,7 +150,6 @@ function love.keypressed(k)
 end
 
 function drawWindow(WINDOW_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
---  coroutine.resume( cs )
   FULLSCREEN = FULLSCREEN and true or false
   if FULLSCREEN then love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {fullscreen = true, fullscreentype = "desktop"})
   else love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT) end
@@ -158,7 +157,7 @@ end
 
 
 function love.draw()
-  love.graphics.setColor(unpack(INFO))
+  love.graphics.setColor(unpack(colors.INFO))
   love.graphics.printf("User steps: " .. steps["user"], MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   love.graphics.printf("Solver steps: " .. steps["solver"], MAZE_WIDTH, 30, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
   --love.graphics.printf(coroutine.status( cs ), MAZE_WIDTH, 60, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
@@ -177,23 +176,20 @@ function love.draw()
   if not showMaze then
     maze:draw(width, height)
 
-    -- if coroutine.status( cs ) == "suspended" then
-    --   coroutine.resume( cs )
-    -- end
     if c_solved then
-      printSolution(maze.last, function(node) return node end, CIRCULARPATH)
+      printSolution(maze.last, function(node) return node end, colors.CIRCULARPATH)
     end
     if solvedToKey then
-      printSolution(maze.keyPos, function(node) return node.attrToKey end, TOKEYPATH, true)
+      printSolution(maze.keyPos, function(node) return node.attrToKey end, colors.TOKEYPATH, true)
       done.key = true
     end
     if solvedToExit then
-      printSolution(maze.last, function(node) return node.attrToExit end, TOEXITPATH, true)
+      printSolution(maze.last, function(node) return node.attrToExit end, colors.TOEXITPATH, true)
       done.exit = true
     end
 
     if maze.current.isLast and maze.current.open then
-      love.graphics.setColor(unpack(INFO))
+      love.graphics.setColor(unpack(colors.INFO))
       love.graphics.printf("YOU WIN!", MAZE_WIDTH, 50, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
     end
   else
