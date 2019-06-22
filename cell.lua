@@ -1,11 +1,6 @@
 require('colors')
 Cell = {
-  walls = {
-    up = true,
-    right = true,
-    down = true,
-    left = true
-  },
+  walls = { up = true, right = true, down = true, left = true },
   visited = false
 }
 
@@ -27,7 +22,7 @@ function Cell.new(self, row, col)
   obj.walls.right = self.walls.right
   obj.walls.down = self.walls.down
   obj.walls.left = self.walls.left
-  obj.status = {}
+  obj.status = { CLOSEDTOEXIT = false, OPENTOEXIT = false, CLOSEDTOKEY=false, OPENTOKEY = false, CIRCULAR_VISITED=false }
   setmetatable(obj, self)
   self.__index = self
   return obj
@@ -36,20 +31,16 @@ end
 function Cell.draw(self, width, height)
   local x = (self.col - 1) * width
   local y = (self.row - 1) * height
-  if self.status then
-    for color, state in pairs(self.status) do
-      love.graphics.printf(color, MAZE_WIDTH, 60, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-      if state then
-        love.graphics.setColor(unpack(colors[color]))
-        love.graphics.rectangle("fill", x, y, width, height)
-      end
+  
+  for color, state in pairs(self.status) do
+    if state then
+      love.graphics.setColor(unpack(colors[color]))
+      love.graphics.rectangle("fill", x, y, width, height)
     end
   end
+  
   if self.isLast then
-    if
-    self.open then  love.graphics.setColor(unpack(colors.OPENEDLAST))
-    else            love.graphics.setColor(unpack(colors.CLOSEDLAST))
-    end
+    love.graphics.setColor(unpack(self.open and colors.OPENEDLAST or colors.CLOSEDLAST))
     love.graphics.rectangle("fill", x, y, width, height)
   end
   if self.hasKey then
@@ -63,8 +54,9 @@ function Cell.draw(self, width, height)
 
   if self.current then
     love.graphics.setColor(unpack(colors.CURRENT))
-    love.graphics.ellipse("fill",x+width/2,y+height/2,width/2,height/2)
+    love.graphics.ellipse("fill", x + width / 2, y + height / 2, width / 2, height / 2)
   end
+  
   love.graphics.setColor(unpack(colors.WALLS))
   if self.walls.up then love.graphics.line(x, y, x + width, y) end
   if self.walls.right then love.graphics.line(x + width, y, x + width, y + height) end
