@@ -61,7 +61,7 @@ function parseArgs(args)
 end
 
 function setParams()
-  FULLSCREEN = FULLSCREEN or true
+  FULLSCREEN = FULLSCREEN or false
   local maxW, maxH = love.window.getDesktopDimensions()
   
   MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
