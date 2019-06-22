@@ -32,7 +32,6 @@ end
 function Stack.pop(self, num)
   local num = num or 1
   local entries = {}
-  -- get values into entries
   for i = 1, num do
     if #self._et ~= 0 then
       table.insert(entries, self._et[#self._et])
@@ -54,6 +53,5 @@ function Stack.draw(self, drawFun)
     drawFun(i, v)
   end
 end
-
 
 return Stack
