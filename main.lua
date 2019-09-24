@@ -4,38 +4,15 @@ local solver = require('a-star-solver')
 local Stack = require('stack')
 local Graph = require('graph')
 local directions , opposite = unpack(require('directions'))
-local cSolver = require("circular-solver")
 require('colors')
 
 prevs = Stack:new()
 showMaze = true
 
 keys = {
-  ["return"] = function() resolve = not resolve end,
   ["escape"] = function() exit() end,
-  ["r"] = function() start() end,
   ["v"] = function() showMaze = not showMaze end,
-  ["c"] = function() c_resolve = not c_resolve end,
-  __index = function(t, k)
-    if maze.current == maze.last and not maze.keyPos.hasKey then return function() end end
-    k = (k == 'a' and 'left' or (k == 'd' and 'right' or (k == 's' and 'down' or (k == 'w' and 'up' or k))))
-    if k ~= 'left' and k ~= 'right' and k ~= 'down' and k ~= 'up' then
-      return function() end
-    end
-    return function()
-      local valid, key = unpack(maze:move(k))
-      if valid then
-        if k == opposite(prevs:top()) then
-          prevs:pop()
-          steps["user"] = steps["user"] - 1;
-        else
-          prevs:push(k)
-          steps["user"] = steps["user"] + 1
-        end
-        if key then prevs:clear() end
-      end
-    end
-  end
+  __index = function() return function() end end
 }
 setmetatable(keys, keys)
 
@@ -45,68 +22,52 @@ end
 
 function parseArgs(args)
   for i , arg in pairs(args) do
-    if arg == "-debug"  then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start()
-    elseif arg == "-c"  then
-      COLS = tonumber(args[i+1])
-      if COLS < 2 then exit('Minimum Colums: 2') end
-    elseif arg == "-r"  then
-      ROWS = tonumber(args[i+1])
-      if ROWS < 2 then exit('Minimum Rows: 2') end
-    elseif arg == "-f"  then FULLSCREEN = true
-    elseif arg == "-mh" then WINDOW_HEIGHT = tonumber(args[i+1])
-    elseif arg == "-mw" then MAZE_WIDTH = tonumber(args[i+1])
-    elseif arg == "-p"  then PIERCE_PERCENTAGE = tonumber(args[i+1])
-    end
+    if arg == "-debug"  then require("mobdebug").on(); require("mobdebug").coro(); require("mobdebug").start() end
   end
 end
 
-function setParams()
-  FULLSCREEN = FULLSCREEN or false
-  local maxW, maxH = love.window.getDesktopDimensions()
-  
-  MAZE_WIDTH = FULLSCREEN and maxW - INFO_WIDTH or MAZE_WIDTH and MAZE_WIDTH or 800
-  WINDOW_HEIGHT = FULLSCREEN and maxH or WINDOW_HEIGHT and WINDOW_HEIGHT or 800
-  
-  ROWS = ROWS or 30
-  COLS = COLS or math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
-  
-  setRandoms()
+FULLSCREEN = true
+maxW, maxH = love.window.getDesktopDimensions()
+MAZE_WIDTH = maxW
+WINDOW_HEIGHT = maxH
 
-  PIERCE_PERCENTAGE = PIERCE_PERCENTAGE or 0.5
-  
-  width = MAZE_WIDTH / COLS
-  height = WINDOW_HEIGHT / ROWS
+function setParams()
+  ROWS = math.random(5,80)
+  COLS = math.ceil(ROWS * (MAZE_WIDTH / WINDOW_HEIGHT))
+  setRandoms()
 end
 
 function setRandoms()
   START_ROW , START_COL = math.random(1, ROWS) , math.random(1, COLS)
---  START_ROW , START_COL = 1,1
---  START_ROW , START_COL = ROWS/2,COLS/2
   LAST_ROW , LAST_COL = math.random(1, ROWS) , math.random(1, COLS)
---  LAST_ROW , LAST_COL = ROWS, COLS
 
   keypos = {}
   repeat
     keyPos = { math.random(1,ROWS),math.random(1,COLS) }
   until keyPos[1] == START_ROW and keyPos[2] == START_COL
---  keyPos = { ROWS/2, COLS/2 }
+  
+  width = MAZE_WIDTH / COLS
+  height = WINDOW_HEIGHT / ROWS
+  PIERCE_PERCENTAGE = math.random(0, 1) / math.random(1, 100)
+
+end
+
+function love.mousemoved()
+    exit()
 end
 
 function love.load(args)
+  love.mouse.setVisible(false)
   love.graphics.setBackgroundColor(colors.BACKGROUND)
-  INFO_WIDTH = 200
+  INFO_WIDTH = 0
   parseArgs(args)
   setParams()
   start()
   drawWindow(MAZE_WIDTH + INFO_WIDTH, WINDOW_HEIGHT, FULLSCREEN)
 end
 
-
-function love.update(dt)
-  love.timer.sleep(1/60 - dt)
-end
-
 function start()
+  setParams()
   maze = Maze:new(ROWS, COLS, START_ROW, START_COL, LAST_ROW, LAST_COL)
 
   setRandoms()
@@ -115,26 +76,7 @@ function start()
   maze:pierce(PIERCE_PERCENTAGE)
 
   graph = Graph:new()
-  local function pitagora(current, target)
-    return math.sqrt(
-      math.pow(
-        math.abs(current.col - target.col), 2
-      ) +
-    math.pow(
-        math.abs(current.row - target.row), 2
-      )
-    )
-  end
-  local dijkstra = function() return 1 end
   graph:build(maze, maze.start)
---  graph:build(maze, maze.start, nil, pitagora)
---  graph:build(maze, maze.start, nil, dijkstra)
---  graph:build(maze, maze.start, pitagora)
---  graph:build(maze, maze.start, pitagora, dijkstra)
---  graph:build(maze, maze.start, pitagora, pitagora)
---  graph:build(maze, maze.start, dijkstra)
---  graph:build(maze, maze.start, dijkstra, pitagora)
---  graph:build(maze, maze.start, dijkstra, dijkstra)
 
   toKey = coroutine.create(solver)
   toExit = coroutine.create(solver)
@@ -159,11 +101,8 @@ function start()
       function (node) return node.attrToExit end
     )
 
-  cs = coroutine.create( cSolver )
-  
   steps = { user = 0, solver = 0 }
-  resolve = false
-  c_resolve = false
+  resolve = true
   done = { key = false, exit = false }
 end
 
@@ -176,10 +115,17 @@ end
 
 
 function love.draw()
-  love.graphics.setColor(unpack(colors.INFO))
-  love.graphics.printf("User steps: " .. steps["user"], MAZE_WIDTH, 10, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-  love.graphics.printf("Solver steps: " .. steps["solver"], MAZE_WIDTH, 30, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
-
+  if restart then
+    restart = false
+    start()
+  end
+  
+  if solvedToExit and solvedToKey then
+    love.timer.sleep(2.5)
+    restart = true
+    return
+  end
+  
   if resolve then
     if (continueToExit or not solvedToExit) then
       _,solvedToExit,continueToExit = coroutine.resume( toExit )
@@ -189,19 +135,12 @@ function love.draw()
     end
   end
 
-  if c_resolve and not c_solved then
-    _,c_solved = coroutine.resume( cs, graph.nodes[maze.start.row][maze.start.col], graph.nodes[maze.last.row][maze.last.col])
-  end
-
   if showMaze then
     maze:draw(width, height)
   else
     graph:draw(width, height)
   end
   
-  if c_solved then
-    printSolution(maze.last, function(node) return node end, colors.CIRCULARPATH)
-  end
   if solvedToKey then
     printSolution(maze.keyPos, function(node) return node.attrToKey end, colors.TOKEYPATH, true)
     done.key = true
@@ -210,7 +149,7 @@ function love.draw()
     printSolution(maze.last, function(node) return node.attrToExit end, colors.TOEXITPATH, true)
     done.exit = true
   end
-    
+  
   if maze.current.isLast and maze.current.open then
     love.graphics.setColor(unpack(colors.INFO))
     love.graphics.printf("YOU WIN!", MAZE_WIDTH, 50, INFO_WIDTH - 10, "left", 0, 1, 1, -10)
