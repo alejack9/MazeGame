@@ -48,7 +48,7 @@ function setRandoms()
   
   width = MAZE_WIDTH / COLS
   height = WINDOW_HEIGHT / ROWS
-  PIERCE_PERCENTAGE = math.random(0, 1) / math.random(1, 100)
+  PIERCE_PERCENTAGE = math.random(0, 1) / 100
 
 end
 
